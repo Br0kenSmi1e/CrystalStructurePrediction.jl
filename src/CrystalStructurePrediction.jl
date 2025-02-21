@@ -1,5 +1,12 @@
 module CrystalStructurePrediction
 
-# Write your package code here.
+using SpecialFunctions
+using LinearAlgebra
+using JuMP
+using HiGHS
+
+export real_space_sum
+
+include("ewald.jl")
 
 end
