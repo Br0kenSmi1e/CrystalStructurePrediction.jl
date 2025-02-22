@@ -5,7 +5,7 @@ using LinearAlgebra
 using JuMP
 using HiGHS
 
-export real_space_sum
+export Lattice, real_space_sum
 
 include("ewald.jl")
 
