@@ -5,8 +5,8 @@ end
 
 struct Ion{T}
     species::String
-    frac_pos::AbstractVector{T}
     charge::Int
+    frac_pos::AbstractVector{T}
 end
 
 function periodic_vectors(lattice::Lattice{T}) where T

@@ -17,11 +17,7 @@ Argument:
     interaction<:Function: the interaction energy, given the shift as a list of integer.
 """
 function summation(depth::AbstractVector{Int}, interaction::FT) where FT<:Function
-    energy = 0
-    for shift in build_shifts(depth)
-        energy += interaction(shift)
-    end
-    return energy
+    return sum(interaction, build_shifts(depth))
 end
 
 function real_space_potential(r::T, alpha::T) where T<:Real
@@ -43,7 +39,7 @@ function real_space_sum(
         alpha::T
         ) where T<:Real
     interaction = shift -> real_space_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), alpha)
-    return ion_a.charge * ion_b.charge * summation(depth, interaction)
+    return ion_a.charge * ion_b.charge * 5.325e7 * summation(depth, interaction)
 end
 
 # function reciprocal_space_potential(
@@ -69,11 +65,11 @@ function reciprocal_space_sum(
         alpha::T
         ) where T<:Real
     interaction = shift -> reciprocal_space_potential(2π * transpose(inv(lattice.vectors)) * shift, lattice.vectors * (ion_b.frac_pos - ion_a.frac_pos), alpha)
-    return ion_a.charge * ion_b.charge * summation(depth, interaction) / abs(det(lattice.vectors))
+    return ion_a.charge * ion_b.charge * 5.325e7 * real(summation(depth, interaction)) / abs(det(lattice.vectors))
 end
 
 function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real
-    return A * exp(-r/ρ) - C / r^6
+    return r ≈ 0 ? 0 : A * exp(-r/ρ) - C / r^6
 end
 
 function buckingham_parameters(ion_a::Ion{T}, ion_b::Ion{T}) where T
