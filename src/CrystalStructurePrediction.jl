@@ -6,7 +6,7 @@ using JuMP
 using HiGHS
 
 export Lattice, Ion
-export real_space_sum, reciprocal_space_sum
+export real_space_sum, reciprocal_space_sum, buckingham_sum
 
 include("struct.jl")
 include("interaction.jl")

@@ -79,7 +79,7 @@ function reciprocal_space_sum(
         alpha::T
         ) where T<:Real
     interaction = shift -> reciprocal_space_potential(2π * transpose(inv(lattice.vectors)) * shift, lattice.vectors * (ion_b.frac_pos - ion_a.frac_pos), alpha)
-    return ion_a.charge * ion_b.charge * summation(depth, interaction)
+    return ion_a.charge * ion_b.charge * summation(depth, interaction) / abs(det(lattice.vectors))
 end
 
 function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real
