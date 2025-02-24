@@ -4,18 +4,8 @@
 # ewald sum = real space sum + reciprocal space sum + "self" energy
 
 
-function construct_shifts(depth::AbstractVector{Int})
-    # shifts = Array{NTuple{length(depth), Int}}(undef, Tuple(2 * depth .+ 1))
-    function decompose(n::Int)
-        remain = n
-        result = Vector{Int}(undef, length(depth))
-        for i in range(1, length(depth))
-            result[i] = remain ÷ prod(2 * depth[i+1:end] .+ 1) - depth[i]
-            remain = remain % prod(2 * depth[i+1:end] .+ 1)
-        end
-        return result
-    end
-    return [decompose(n) for n in range(0, prod(2 * depth .+ 1) - 1)]
+function build_shifts(depth::AbstractVector{Int})
+    return [shift - depth for shift in build_grid(2 * depth .+ 1)]
 end
 
 """
@@ -28,7 +18,7 @@ Argument:
 """
 function summation(depth::AbstractVector{Int}, interaction::FT) where FT<:Function
     energy = 0
-    for shift in construct_shifts(depth)
+    for shift in build_shifts(depth)
         energy += interaction(shift)
     end
     return energy

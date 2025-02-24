@@ -18,3 +18,16 @@ function periodic_vectors(lattice::Lattice{T}) where T
     end
     return periodic_vectors
 end
+
+function build_grid(nsize::AbstractVector{Int})
+    function decompose(n::Int)
+        remain = n
+        result = Vector{Int}(undef, length(nsize))
+        for i in range(1, length(nsize))
+            result[i] = remain ÷ prod(nsize[i+1:end])
+            remain = remain % prod(nsize[i+1:end])
+        end
+        return result
+    end
+    return [decompose(n) for n in range(0, prod(nsize) - 1)]
+end
