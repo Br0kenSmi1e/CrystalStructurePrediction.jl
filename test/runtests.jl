@@ -5,6 +5,6 @@ using Test
     # Write your tests here.
 # end
 
-@testset "ewald.jl" begin
-    include("ewald.jl")
+@testset "interaction.jl" begin
+    include("interaction.jl")
 end

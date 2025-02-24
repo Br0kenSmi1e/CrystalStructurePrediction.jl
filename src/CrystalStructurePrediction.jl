@@ -5,8 +5,10 @@ using LinearAlgebra
 using JuMP
 using HiGHS
 
-export Lattice, real_space_sum
+export Lattice, Ion
+export real_space_sum, reciprocal_space_sum
 
-include("ewald.jl")
+include("struct.jl")
+include("interaction.jl")
 
 end
