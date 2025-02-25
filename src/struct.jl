@@ -1,33 +1,13 @@
 struct Lattice{T}
-    vectors::AbstractMatrix{T}
-    pbc::AbstractVector{Bool}
+    vectors::Matrix{T}
+    pbc::Vector{Bool}
 end
 
 struct Ion{T}
-    species::String
+    species::Symbol
     charge::Int
-    frac_pos::AbstractVector{T}
+    frac_pos::Vector{T}
 end
 
-function periodic_vectors(lattice::Lattice{T}) where T
-    periodic_vectors = Matrix{T}(undef, size(lattice.vectors)[1], sum(lattice.pbc))
-    for column in range(1, size(lattice.vectors)[2])
-        if lattice.pbc[column]
-            periodic_vectors[:, column] = lattice.vectors[:, column]
-        end
-    end
-    return periodic_vectors
-end
-
-function build_grid(nsize::AbstractVector{Int})
-    function decompose(n::Int)
-        remain = n
-        result = Vector{Int}(undef, length(nsize))
-        for i in range(1, length(nsize))
-            result[i] = remain ÷ prod(nsize[i+1:end])
-            remain = remain % prod(nsize[i+1:end])
-        end
-        return result
-    end
-    return [decompose(n) for n in range(0, prod(nsize) - 1)]
-end
+periodic_vectors(lattice::Lattice) = lattice.vectors[:, lattice.pbc]
+build_grid(nsize::AbstractVector{Int}) = map(x->collect(x.I .- 1), vec(CartesianIndices(Tuple(nsize))))
