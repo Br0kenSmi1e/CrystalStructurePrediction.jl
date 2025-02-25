@@ -32,11 +32,11 @@ Argument:
     lattice::AbstractMatrix: in the form [a, b, c], where a, b, c are column vectors.
 """
 function real_space_sum(
-        depth::AbstractVector{Int},
         ion_a::Ion{T},
         ion_b::Ion{T},
         lattice::Lattice{T},
-        alpha::T
+        alpha::T,
+        depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> real_space_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), alpha)
     return ion_a.charge * ion_b.charge * 5.325e7 * summation(depth, interaction)
@@ -58,11 +58,11 @@ function reciprocal_space_potential(k::AbstractVector{T}, x::AbstractVector{T}, 
 end
 
 function reciprocal_space_sum(
-        depth::AbstractVector{Int},
         ion_a::Ion{T},
         ion_b::Ion{T},
         lattice::Lattice{T},
-        alpha::T
+        alpha::T,
+        depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> reciprocal_space_potential(2π * transpose(inv(lattice.vectors)) * shift, lattice.vectors * (ion_b.frac_pos - ion_a.frac_pos), alpha)
     return ion_a.charge * ion_b.charge * 5.325e7 * real(summation(depth, interaction)) / abs(det(lattice.vectors))
@@ -85,10 +85,10 @@ function buckingham_parameters(ion_a::Ion{T}, ion_b::Ion{T}) where T
 end
 
 function buckingham_sum(
-        depth::AbstractVector{Int},
         ion_a::Ion{T},
         ion_b::Ion{T},
-        lattice::Lattice{T}
+        lattice::Lattice{T},
+        depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> buckingham_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), buckingham_parameters(ion_a, ion_b)...)
     return summation(depth, interaction)

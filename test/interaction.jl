@@ -13,7 +13,7 @@ end
     alpha = 2.0
     for depth in range(0,4)
         depth_list = [depth for _ in range(1,3)]
-        @test real_space_sum(depth_list, ion_a, ion_b, lattice, alpha) ≈ real_space_sum(depth_list, ion_b, ion_a, lattice, alpha)
+        @test real_space_sum(ion_a, ion_b, lattice, alpha, depth_list) ≈ real_space_sum(ion_b, ion_a, lattice, alpha, depth_list)
     end
 end
 
@@ -24,7 +24,7 @@ end
     alpha = 2.0
     for depth in range(0,4)
         depth_list = [depth for _ in range(1,3)]
-        @test reciprocal_space_sum(depth_list, ion_a, ion_b, lattice, alpha) ≈ reciprocal_space_sum(depth_list, ion_b, ion_a, lattice, alpha)
+        @test reciprocal_space_sum(ion_a, ion_b, lattice, alpha, depth_list) ≈ reciprocal_space_sum(ion_b, ion_a, lattice, alpha, depth_list)
     end
 end
 
@@ -34,6 +34,6 @@ end
     lattice = Lattice(rand(3,3), [true, true, true])
     for depth in range(0,4)
         depth_list = [depth for _ in range(1,3)]
-        @test buckingham_sum(depth_list, ion_a, ion_b, lattice) ≈ buckingham_sum(depth_list, ion_b, ion_a, lattice)
+        @test buckingham_sum(ion_a, ion_b, lattice, depth_list) ≈ buckingham_sum(ion_b, ion_a, lattice, depth_list)
     end
 end
