@@ -73,15 +73,11 @@ function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real
 end
 
 function buckingham_parameters(ion_a::Ion{T}, ion_b::Ion{T}) where T
-    if ion_a.species=="O" && ion_b.species=="O"
+    if Set([ion_a.species, ion_b.species]) == Set([:O])
         return 1388.7, 0.36262, 175.0
-    elseif ion_a.species=="Sr" && ion_b.species=="O"
+    elseif Set([ion_a.species, ion_b.species]) == Set([:Sr, :O])
         return 1952.39, 0.33685, 19.22
-    elseif ion_a.species=="Ti" && ion_b.species=="O"
-        return 4590.7279, 0.261, 0.0
-    elseif ion_a.species=="O" && ion_b.species=="Sr"
-        return 1952.39, 0.33685, 19.22
-    elseif ion_a.species=="O" && ion_b.species=="Ti"
+    elseif Set([ion_a.species, ion_b.species]) == Set([:Ti, :O])
         return 4590.7279, 0.261, 0.0
     else
         return 0.0, 1.0, 0.0

@@ -10,4 +10,4 @@ struct Ion{T}
 end
 
 periodic_vectors(lattice::Lattice) = lattice.vectors[:, lattice.pbc]
-build_grid(nsize::AbstractVector{Int}) = map(x->collect(x.I[end:-1:1] .- 1), vec(CartesianIndices(Tuple(nsize[end:-1:1]))))
+build_grid(nsize::AbstractVector{Int}) = map(x->collect(x.I .- 1), vec(CartesianIndices(Tuple(nsize))))
