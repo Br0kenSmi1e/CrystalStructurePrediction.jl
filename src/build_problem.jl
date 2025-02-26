@@ -19,3 +19,71 @@ function build_problem(
     assert_is_solved_and_feasible(csp)
     return value.(x)
 end
+
+function build_linear_problem(
+        grid_size::AbstractVector{Int},
+        population_list::AbstractVector{Int},
+        interaction_matrix::AbstractArray{T}
+        ) where T<:Real
+    csp = Model(HiGHS.Optimizer)
+    num_grid_points = prod(grid_size)
+    num_species = length(population_list)
+    @variable(csp, 0 <= x[1:num_species, 1:num_grid_points] <= 1, Int)
+    @variable(csp, 0 <= s[1:num_species, 1:num_grid_points, 1:num_species, 1:num_grid_points] <= 1, Int)
+    # @constraint(csp, sum(x[t, 1] for t in range(1, num_species)) == 1)
+    for t in range(1, num_species)
+        @constraint(csp, sum(x[t, p] for p in range(1, num_grid_points)) == population_list[t])
+    end
+    for p in range(1, num_grid_points)
+        @constraint(csp, sum(x[t, p] for t in range(1, num_species)) <= 1)
+    end
+    # for (t1, p1, t2, p2) in zip(range(1,num_species),range(1,num_grid_points),range(1,num_species),range(1,num_grid_points))
+    for i in CartesianIndices((num_species, num_grid_points))
+    for j in CartesianIndices((num_species, num_grid_points))
+        @constraint(csp, s[i.I..., j.I...] <= x[i])
+        @constraint(csp, s[i.I..., j.I...] <= x[j])
+        @constraint(csp, s[i.I..., j.I...] >= x[i] + x[j] - 1)
+    end
+    end
+    # for index_a in CartesianIndices(ion_sheet)
+    #     for index_b in CartesianIndices(ion_sheet)
+    #         if norm(lattice.vectors * (ion_sheet[index_a].frac_pos - ion_sheet[index_b].frac_pos)) < 0.75 * (ion_sheet[index_a].radii + ion_sheet[index_b].radii)
+    #             @constraint(csp, x[index_a] + x[index_b] <= 1)
+    #         end
+    #     end
+    # end
+    # @objective(csp, Min, sum(interaction_matrix[index] * s[index] for index in CartesianIndices(interaction_matrix)))
+    @objective(csp, Min, sum(interaction_matrix .* s))
+    optimize!(csp)
+    assert_is_solved_and_feasible(csp)
+    return objective_value(csp), value.(x), value.(s)
+end
+
+function build_quadratic_problem(
+        grid_size::AbstractVector{Int},
+        population_list::AbstractVector{Int},
+        interaction_matrix::AbstractArray{T}
+        ) where T<:Real
+    csp = Model(HiGHS.Optimizer)
+    num_grid_points = prod(grid_size)
+    num_species = length(population_list)
+    @variable(csp, 0 <= x[1:num_species, 1:num_grid_points] <= 1, Int)
+    # @constraint(csp, sum(x[t, 1] for t in range(1, num_species)) == 1)
+    for t in range(1, num_species)
+        @constraint(csp, sum(x[t, p] for p in range(1, num_grid_points)) == population_list[t])
+    end
+    for p in range(1, num_grid_points)
+        @constraint(csp, sum(x[t, p] for t in range(1, num_species)) <= 1)
+    end
+    # for index_a in CartesianIndices(ion_sheet)
+    #     for index_b in CartesianIndices(ion_sheet)
+    #         if norm(lattice.vectors * (ion_sheet[index_a].frac_pos - ion_sheet[index_b].frac_pos)) < 0.75 * (ion_sheet[index_a].radii + ion_sheet[index_b].radii)
+    #             @constraint(csp, x[index_a] + x[index_b] <= 1)
+    #         end
+    #     end
+    # end
+    @objective(csp, Min, sum(interaction_matrix[i.I...,j.I...] * x[i] * x[j]  for i in CartesianIndices((num_species, num_grid_points)) for j in CartesianIndices((num_species, num_grid_points))))
+    optimize!(csp)
+    assert_is_solved_and_feasible(csp)
+    return value.(x)
+end

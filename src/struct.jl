@@ -6,6 +6,7 @@ end
 struct Ion{T}
     species::Symbol
     charge::Int
+    radii::Float64
     frac_pos::Vector{T}
 end
 

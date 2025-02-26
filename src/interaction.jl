@@ -39,7 +39,7 @@ function real_space_sum(
         depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> real_space_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), alpha)
-    return ion_a.charge * ion_b.charge * 5.325e7 * summation(depth, interaction)
+    return ion_a.charge * ion_b.charge * 14.384 * summation(depth, interaction)
 end
 
 # function reciprocal_space_potential(
@@ -54,7 +54,7 @@ end
 # end
 
 function reciprocal_space_potential(k::AbstractVector{T}, x::AbstractVector{T}, alpha::T) where T<:Real
-    return norm(k) ≈ 0 ? 0 : (2π / norm(k)^2) * exp(-( norm(k)^2 / (4*alpha^2) ) + 2π*im* dot(k, x))
+    return norm(k) ≈ 0 ? 0 : (2π / dot(k, k)) * exp(-( dot(k, k) / (4*alpha^2) ) ) * cos(dot(k, x))
 end
 
 function reciprocal_space_sum(
@@ -65,7 +65,7 @@ function reciprocal_space_sum(
         depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> reciprocal_space_potential(2π * transpose(inv(lattice.vectors)) * shift, lattice.vectors * (ion_b.frac_pos - ion_a.frac_pos), alpha)
-    return ion_a.charge * ion_b.charge * 5.325e7 * real(summation(depth, interaction)) / abs(det(lattice.vectors))
+    return ion_a.charge * ion_b.charge * 14.384 * summation(depth, interaction) / abs(det(lattice.vectors))
 end
 
 function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real
@@ -92,4 +92,12 @@ function buckingham_sum(
         ) where T<:Real
     interaction = shift -> buckingham_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), buckingham_parameters(ion_a, ion_b)...)
     return summation(depth, interaction)
+end
+
+function minimum_distance(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}) where T<:Real
+    return min([norm(lattice.vectors * (ion_a.frac_pos - ion_b.frac_pos + shift)) for shift in build_shifts([1, 1, 1])]...)
+end
+
+function radii_penalty(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}, c::Float64) where T<:Real
+    return minimum_distance(ion_a, ion_b, lattice) / (ion_a.radii + ion_b.radii) > c ? 0 : 1e10
 end
