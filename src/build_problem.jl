@@ -65,16 +65,16 @@ function build_quadratic_problem(
         interaction_matrix::AbstractArray{T}
         ) where T<:Real
 
-    csp = Model(EAGO.Optimizer)
+    csp = Model(Gurobi.Optimizer)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
-    @variable(csp, x[1:num_species, 1:num_grid_points], Bin)
+    @variable(csp, 0 <= x[1:num_species*num_grid_points] <= 1, Int)
     # @constraint(csp, sum(x[t, 1] for t in range(1, num_species)) == 1)
     for t in range(1, num_species)
-        @constraint(csp, sum(x[t, p] for p in range(1, num_grid_points)) == population_list[t])
+        @constraint(csp, sum(x[num_grid_points*(t-1)+p] for p in range(1, num_grid_points)) == population_list[t])
     end
     for p in range(1, num_grid_points)
-        @constraint(csp, sum(x[t, p] for t in range(1, num_species)) <= 1)
+        @constraint(csp, sum(x[num_grid_points*(t-1)+p] for t in range(1, num_species)) <= 1)
     end
     # for index_a in CartesianIndices(ion_sheet)
     #     for index_b in CartesianIndices(ion_sheet)
@@ -83,7 +83,7 @@ function build_quadratic_problem(
     #         end
     #     end
     # end
-    @objective(csp, Min, sum(interaction_matrix[i.I...,j.I...] * x[i] * x[j]  for i in CartesianIndices((num_species, num_grid_points)) for j in CartesianIndices((num_species, num_grid_points))))
+    @objective(csp, Min, x' * interaction_matrix * x)
     optimize!(csp)
     assert_is_solved_and_feasible(csp)
     return objective_value(csp), value.(x)
