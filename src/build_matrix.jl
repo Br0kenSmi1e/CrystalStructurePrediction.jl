@@ -12,6 +12,18 @@ function build_ion_sheet(grid_size::AbstractVector{Int},
     return ion_sheet
 end
 
+function build_ion_list(grid_size::AbstractVector{Int},
+        species_list::AbstractVector{Symbol},
+        charge_list::AbstractVector{Int},
+        radii_list::AbstractVector{Float64}
+        )
+    """
+    return a list of ions in the format of:
+    `[ion(t1, p1), ion(t1, p2), ..., ion(t1,pn), ion(t2, p1), ..., ion(tm, pn)]`
+    """
+    return [Ion(species_list[t], charge_list[t], radii_list[t], pos ./ grid_size) for t in range(1, length(species_list)) for pos in build_grid(grid_size)]
+end
+
 function interaction_energy(
         ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T},
         alpha::T, real_depth::AbstractVector{Int}, reciprocal_depth::AbstractVector{Int}, buckingham_depth::AbstractVector{Int}
@@ -33,4 +45,19 @@ function build_matrix(
         end
     end
     return interaction_matrix
+end
+
+function build_vector(
+        ion_list::AbstractVector{Ion{T}},
+        lattice::Lattice{T},
+        interaction_energy::FT,
+        parameters::Tuple
+        ) where {T<:Real, FT<:Function}
+    vector = zeros(T, length(ion_list) * (length(ion_list)-1) ÷ 2)
+    for (index_a, ion_a) in enumerate(ion_list)
+        for (index_b, ion_b) in enumerate(ion_list[index_a+1:end])
+            vector[index_a + (index_a+index_b-1)*(index_a+index_b-2)÷2] = interaction_energy(ion_a, ion_b, lattice, parameters...)
+        end
+    end
+    return vector
 end

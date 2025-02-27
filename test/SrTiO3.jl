@@ -1,6 +1,6 @@
 using CrystalStructurePrediction
 
-grid_size = [2, 2, 2]
+grid_size = [4, 4, 4]
 population_list = [1, 1, 3]
 species_list = [:Sr, :Ti, :O]
 charge_list = [+2, +4, -2]
@@ -14,15 +14,16 @@ depth = [4, 4, 4]
 alpha = 1 / 3.899
 
 lattice = Lattice(L, [true, true, true])
-ion_sheet = build_ion_sheet(grid_size, species_list, charge_list, radii_list)
-matrix = build_matrix(ion_sheet, lattice, interaction_energy, (alpha, depth, depth, depth))
+ion_list = build_ion_list(grid_size, species_list, charge_list, radii_list)
+vector = build_vector(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
 # matrix = build_matrix(ion_sheet, lattice, buckingham_sum, Tuple([depth]))
 # @show matrix
 
-energy, solution_x, solution_s = build_linear_problem(grid_size, population_list, matrix)
-for index in CartesianIndices(ion_sheet)
+energy, solution_x, solution_s = build_linear_problem(grid_size, population_list, vector)
+# energy, solution_x = build_quadratic_problem(grid_size, population_list, matrix)
+for index in CartesianIndices(ion_list)
     if solution_x[index] ≈ 1
-        @show ion_sheet[index]
+        @show ion_list[index]
     end
 end
 
