@@ -15,12 +15,13 @@ alpha = 1 / 3.899
 
 lattice = Lattice(L, [true, true, true])
 ion_list = build_ion_list(grid_size, species_list, charge_list, radii_list)
-# vector = build_vector(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
-# energy, solution_x, solution_s = build_linear_problem(grid_size, population_list, vector)
+proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)
 
-# ion_sheet = build_ion_sheet(grid_size, species_list, charge_list, radii_list)
-matrix = build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
-energy, solution_x = build_quadratic_problem(grid_size, population_list, matrix)
+vector = build_vector(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
+energy, solution_x, solution_s = build_linear_problem(grid_size, population_list, vector, proximal_pairs)
+
+# matrix = build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
+# energy, solution_x = build_quadratic_problem(grid_size, population_list, matrix, proximal_pairs)
 for index in CartesianIndices(ion_list)
     if solution_x[index] ≈ 1
         @show ion_list[index]

@@ -28,7 +28,7 @@ function interaction_energy(
         ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T},
         alpha::T, real_depth::AbstractVector{Int}, reciprocal_depth::AbstractVector{Int}, buckingham_depth::AbstractVector{Int}
         ) where T<:Real
-    return real_space_sum(ion_a, ion_b, lattice, alpha, real_depth) + reciprocal_space_sum(ion_a, ion_b, lattice, alpha, reciprocal_depth) + buckingham_sum(ion_a, ion_b, lattice, buckingham_depth) + CrystalStructurePrediction.radii_penalty(ion_a, ion_b, lattice, 0.7)
+    return real_space_sum(ion_a, ion_b, lattice, alpha, real_depth) + reciprocal_space_sum(ion_a, ion_b, lattice, alpha, reciprocal_depth) + buckingham_sum(ion_a, ion_b, lattice, buckingham_depth)# + CrystalStructurePrediction.radii_penalty(ion_a, ion_b, lattice, 0.7)
 end
 
 function build_matrix(
@@ -59,4 +59,9 @@ function build_vector(
         end
     end
     return vector
+end
+
+function build_proximal_pairs(ion_list::AbstractVector{Ion{T}}, lattice::Lattice{T}, c::Float64) where T<:Real
+    isProximal = (i, j) -> CrystalStructurePrediction.minimum_distance(ion_list[i], ion_list[j], lattice) < c * (ion_list[i].radii + ion_list[j].radii)
+    return [(i,j) for i in range(1, length(ion_list)) for j in range(i+1, length(ion_list)) if isProximal(i, j)]
 end

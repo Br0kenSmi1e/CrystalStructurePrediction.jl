@@ -13,7 +13,7 @@ end
 
 @testset "build_matrix" begin
     lattice = Lattice(rand(2, 2), [true, true])
-    ion_list = build_ion_sheet([1, 1], [:None], [-2], [0.0])
+    ion_list = build_ion_list([1, 1], [:None], [-2], [0.0])
     alpha = 2.0 / (abs(det(lattice.vectors)))^(1/2)
     depth = [0, 0]
     @test build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth)) ≈ [0.0]

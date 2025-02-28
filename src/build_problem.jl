@@ -23,9 +23,10 @@ end
 function build_linear_problem(
         grid_size::AbstractVector{Int},
         population_list::AbstractVector{Int},
-        interaction_vector::AbstractArray{T}
+        interaction_vector::AbstractVector{T},
+        proximal_pairs::AbstractVector{Tuple{Int, Int}}
         ) where T<:Real
-    csp = Model(HiGHS.Optimizer)
+    csp = Model(Gurobi.Optimizer)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
     @variable(csp, 0 <= x[1:num_species*num_grid_points] <= 1, Int)
@@ -37,22 +38,16 @@ function build_linear_problem(
     for p in range(1, num_grid_points)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for t in range(1, num_species)) <= 1)
     end
-    # for (t1, p1, t2, p2) in zip(range(1,num_species),range(1,num_grid_points),range(1,num_species),range(1,num_grid_points))
+    for (i, j) in proximal_pairs
+        @constraint(csp, x[i] + x[j] <= 1)
+    end
     for i in range(1, num_species*num_grid_points-1)
     for j in range(i+1, num_species*num_grid_points)
         @constraint(csp, s[i + (j-1)*(j-2)÷2] <= x[i])
         @constraint(csp, s[i + (j-1)*(j-2)÷2] <= x[j])
         @constraint(csp, s[i + (j-1)*(j-2)÷2] >= x[i] + x[j] - 1)
     end
-    end
-    # for index_a in CartesianIndices(ion_sheet)
-    #     for index_b in CartesianIndices(ion_sheet)
-    #         if norm(lattice.vectors * (ion_sheet[index_a].frac_pos - ion_sheet[index_b].frac_pos)) < 0.75 * (ion_sheet[index_a].radii + ion_sheet[index_b].radii)
-    #             @constraint(csp, x[index_a] + x[index_b] <= 1)
-    #         end
-    #     end
-    # end
-    # @objective(csp, Min, sum(interaction_matrix[index] * s[index] for index in CartesianIndices(interaction_matrix)))
+    end 
     @objective(csp, Min, dot(interaction_vector, s))
     optimize!(csp)
     assert_is_solved_and_feasible(csp)
@@ -62,7 +57,8 @@ end
 function build_quadratic_problem(
         grid_size::AbstractVector{Int},
         population_list::AbstractVector{Int},
-        interaction_matrix::AbstractArray{T}
+        interaction_matrix::AbstractMatrix{T},
+        proximal_pairs::AbstractVector{Tuple{Int, Int}}
         ) where T<:Real
 
     csp = Model(Gurobi.Optimizer)
@@ -75,6 +71,9 @@ function build_quadratic_problem(
     end
     for p in range(1, num_grid_points)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for t in range(1, num_species)) <= 1)
+    end
+    for (i, j) in proximal_pairs
+        @constraint(csp, x[i] + x[j] <= 1)
     end
     # for index_a in CartesianIndices(ion_sheet)
     #     for index_b in CartesianIndices(ion_sheet)
