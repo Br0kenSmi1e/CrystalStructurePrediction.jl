@@ -4,6 +4,7 @@
 /Manifest.toml
 /docs/Manifest.toml
 /docs/build/
+/Gurobi/
 
 .DS_Store
 .vscode/
