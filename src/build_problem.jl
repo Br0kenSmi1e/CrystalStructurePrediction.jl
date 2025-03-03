@@ -64,17 +64,18 @@ function build_quadratic_problem(
     csp = Model(Gurobi.Optimizer)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
-    @variable(csp, 0 <= x[1:num_species*num_grid_points] <= 1, Int)
+    @variable(csp, x[1:num_species*num_grid_points], Bin)
     # @constraint(csp, sum(x[t, 1] for t in range(1, num_species)) == 1)
     for t in range(1, num_species)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for p in range(1, num_grid_points)) == population_list[t])
     end
-    for p in range(1, num_grid_points)
+    @constraint(csp, sum(x[num_grid_points*(t-1)+1] for t in range(1, num_species)) == 1)
+    for p in range(2, num_grid_points)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for t in range(1, num_species)) <= 1)
     end
-    for (i, j) in proximal_pairs
-        @constraint(csp, x[i] + x[j] <= 1)
-    end
+    # for (i, j) in proximal_pairs
+    #     @constraint(csp, x[i] + x[j] <= 1)
+    # end
     # for index_a in CartesianIndices(ion_sheet)
     #     for index_b in CartesianIndices(ion_sheet)
     #         if norm(lattice.vectors * (ion_sheet[index_a].frac_pos - ion_sheet[index_b].frac_pos)) < 0.75 * (ion_sheet[index_a].radii + ion_sheet[index_b].radii)
@@ -82,8 +83,14 @@ function build_quadratic_problem(
     #         end
     #     end
     # end
-    @objective(csp, Min, x' * interaction_matrix * x)
+    @objective(csp, Min, sum(interaction_matrix[i,j]*x[i]*x[j] for i in range(1, num_species*num_grid_points) for j in range(i+1, num_species*num_grid_points) if (j-i)%num_grid_points != 0))
+    # return csp
+    # set_optimizer_attribute(csp, "PoolSearchMode", 2)
+    # set_optimizer_attribute(csp, "PoolSolutions", 1)
+    set_optimizer_attribute(csp, "NodefileStart", 1)
+    # set_optimizer_attribute(csp, "Cuts", 2)
+    
     optimize!(csp)
     assert_is_solved_and_feasible(csp)
-    return objective_value(csp), value.(x)
+    return objective_value(csp), value.(x), csp
 end

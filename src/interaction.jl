@@ -21,7 +21,7 @@ function summation(depth::AbstractVector{Int}, interaction::FT) where FT<:Functi
 end
 
 function real_space_potential(r::T, alpha::T) where T<:Real
-    return r ≈ 0 ? 0 : erfc(alpha * r) / (2 * r)
+    return r ≈ 0 ? - alpha / (π)^0.5 : erfc(alpha * r) / (2 * r)
 end
 
 """
@@ -39,7 +39,7 @@ function real_space_sum(
         depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> real_space_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), alpha)
-    return ion_a.charge * ion_b.charge * 14.384 * summation(depth, interaction)
+    return ion_a.charge * ion_b.charge * 14.399645351950543 * summation(depth, interaction)
 end
 
 # function reciprocal_space_potential(
@@ -65,7 +65,19 @@ function reciprocal_space_sum(
         depth::AbstractVector{Int}
         ) where T<:Real
     interaction = shift -> reciprocal_space_potential(2π * transpose(inv(lattice.vectors)) * shift, lattice.vectors * (ion_b.frac_pos - ion_a.frac_pos), alpha)
-    return ion_a.charge * ion_b.charge * 14.384 * summation(depth, interaction) / abs(det(lattice.vectors))
+    return ion_a.charge * ion_b.charge * 14.399645351950543 * summation(depth, interaction) / abs(det(lattice.vectors))
+end
+
+function minimum_distance(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}) where T<:Real
+    return min([norm(lattice.vectors * (ion_a.frac_pos - ion_b.frac_pos + shift)) for shift in build_shifts([1, 1, 1])]...)
+end
+
+function radii_penalty(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}, c::Float64, penalty::Float64=3e2) where T<:Real
+    if ion_a ≈ ion_b
+        return 0.0
+    else
+        return minimum_distance(ion_a, ion_b, lattice) / (ion_a.radii + ion_b.radii) > c ? 0.0 : penalty
+    end
 end
 
 function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real
@@ -88,8 +100,16 @@ function buckingham_sum(
         ion_a::Ion{T},
         ion_b::Ion{T},
         lattice::Lattice{T},
-        depth::AbstractVector{Int}
+        depth::AbstractVector{Int},
+        threshold::Float64=0.75,
+        penalty::Float64=3e2
         ) where T<:Real
     interaction = shift -> buckingham_potential(norm(lattice.vectors * (ion_b.frac_pos + shift - ion_a.frac_pos)), buckingham_parameters(ion_a, ion_b)...)
-    return summation(depth, interaction)
+    if ion_a ≈ ion_b
+        return summation(depth, interaction)
+    elseif minimum_distance(ion_a, ion_b, lattice) > threshold * (ion_a.radii + ion_b.radii)
+        return summation(depth, interaction)
+    else
+        return penalty
+    end
 end

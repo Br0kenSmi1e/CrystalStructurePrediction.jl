@@ -28,7 +28,7 @@ function interaction_energy(
         ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T},
         alpha::T, real_depth::AbstractVector{Int}, reciprocal_depth::AbstractVector{Int}, buckingham_depth::AbstractVector{Int}
         ) where T<:Real
-    return real_space_sum(ion_a, ion_b, lattice, alpha, real_depth) + reciprocal_space_sum(ion_a, ion_b, lattice, alpha, reciprocal_depth) + buckingham_sum(ion_a, ion_b, lattice, buckingham_depth)# + CrystalStructurePrediction.radii_penalty(ion_a, ion_b, lattice, 0.7)
+    return real_space_sum(ion_a, ion_b, lattice, alpha, real_depth) + reciprocal_space_sum(ion_a, ion_b, lattice, alpha, reciprocal_depth) + buckingham_sum(ion_a, ion_b, lattice, buckingham_depth)# + radii_penalty(ion_a, ion_b, lattice, 0.75)
 end
 
 function build_matrix(
@@ -39,8 +39,8 @@ function build_matrix(
         ) where {T<:Real, FT<:Function}
     matrix = zeros(T, length(ion_list), length(ion_list))
     for (index_a, ion_a) in enumerate(ion_list)
-        for (index_b, ion_b) in enumerate(ion_list[index_a+1:end])
-            matrix[index_a, index_a + index_b] = interaction_energy(ion_a, ion_b, lattice, parameters...)
+        for (index_b, ion_b) in enumerate(ion_list[index_a:end])
+            matrix[index_a, index_a + index_b - 1] = interaction_energy(ion_a, ion_b, lattice, parameters...)
         end
     end
     return (matrix + transpose(matrix)) / 2

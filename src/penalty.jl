@@ -2,7 +2,7 @@ function minimum_distance(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}) whe
     return min([norm(lattice.vectors * (ion_a.frac_pos - ion_b.frac_pos + shift)) for shift in build_shifts([1, 1, 1])]...)
 end
 
-function radii_penalty(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}, c::Float64, penalty::Float64=1e3) where T<:Real
+function radii_penalty(ion_a::Ion{T}, ion_b::Ion{T}, lattice::Lattice{T}, c::Float64, penalty::Float64=3e2) where T<:Real
     if ion_a ≈ ion_b
         return 0.0
     else
