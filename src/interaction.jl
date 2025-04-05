@@ -97,33 +97,3 @@ where `t1, ..., tm` are the types of the ions and `p1, ..., pn` are the fraction
 function ions_on_grid(grid_size::NTuple{N, Int}, type_list::AbstractVector{IonType{T}}) where {N, T}
     return [Ion(type_list[t], SVector((ci.I .- 1) .// grid_size)) for t in range(1, length(type_list)) for ci in CartesianIndices(grid_size)]
 end
-
-function build_matrix(
-        ion_list::AbstractVector{Ion{D, T}},
-        lattice::Lattice{D, T},
-        interaction_energy::FT,
-        parameters::Tuple
-        ) where {D, T<:Real, FT<:Function}
-    matrix = zeros(T, length(ion_list), length(ion_list))
-    for (index_a, ion_a) in enumerate(ion_list)
-        for (index_b, ion_b) in enumerate(ion_list[index_a:end])
-            matrix[index_a, index_a + index_b - 1] = interaction_energy(ion_a, ion_b, lattice, parameters...)
-        end
-    end
-    return (matrix + transpose(matrix)) / 2
-end
-
-function build_vector(
-        ion_list::AbstractVector{Ion{D, T}},
-        lattice::Lattice{D, T},
-        interaction_energy::FT,
-        parameters::Tuple
-        ) where {D, T<:Real, FT<:Function}
-    vector = zeros(T, length(ion_list) * (length(ion_list)-1) ÷ 2)
-    for (index_a, ion_a) in enumerate(ion_list)
-        for (index_b, ion_b) in enumerate(ion_list[index_a+1:end])
-            vector[index_a + (index_a+index_b-1)*(index_a+index_b-2)÷2] = interaction_energy(ion_a, ion_b, lattice, parameters...)
-        end
-    end
-    return vector
-end
