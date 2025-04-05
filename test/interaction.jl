@@ -1,5 +1,6 @@
 using Test
 using CrystalStructurePrediction, StaticArrays
+using CrystalStructurePrediction: interaction_energy, real_space_sum, reciprocal_space_sum, buckingham_sum
 
 @testset "lattice" begin
     lattice = Lattice(rand(3,3), (true, true, true))
