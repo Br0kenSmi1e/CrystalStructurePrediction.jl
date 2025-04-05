@@ -22,19 +22,13 @@ using CrystalStructurePrediction, Test
     
     # Solve the linear problem
     vector = build_vector(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
-    energy, solution_x, csp = build_linear_problem(grid_size, population_list, vector, proximal_pairs)
-    
-    selected_ions = []
-    for index in CartesianIndices(ion_list)
-        if solution_x[index] ≈ 1
-            push!(selected_ions, ion_list[index])
-        end
+    res_linear = build_linear_problem(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
+        interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
     end
-    
-    @test energy ≈ -6.061349350569214
+    @test res_linear.energy ≈ -6.061349350569214
 
     # The quadratic problem formulation
     matrix = build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
-    energy, solution_x, csp = build_quadratic_problem(grid_size, population_list, matrix)
-    @test energy ≈ -6.061349350569214/2
+    res_quadratic = build_quadratic_problem(grid_size, population_list, matrix)
+    @test res_quadratic.energy ≈ -6.061349350569214/2
 end

@@ -1,53 +1,78 @@
+struct IonOptimizationResult{D, T}
+    energy::T
+    selected_ions::AbstractVector{Ion{D, T}}
+end
+
 """
     build_linear_problem(grid_size, population_list, interaction_vector, proximal_pairs; optimizer = SCIP.Optimizer, optimizer_options = Dict())
 
 Build a linear problem for crystal structure prediction. Suited for solvers not supporting quadratic constraints.
 
 # Arguments
-- `grid_size::NTuple{N, Int}`: The size of the grid.
-- `population_list::AbstractVector{Int}`: The number of atoms of each species.
-- `interaction_vector::AbstractVector{T}`: The interaction vector.
-- `proximal_pairs::AbstractVector{Tuple{Int, Int}}`: The proximal pairs.
+- `interaction::Function`: The interaction function.
+- `ions::AbstractVector{Ion{D, T}}`: The ions.
+- `populations::Dict{IonType{T}, Int}`: The populations of the ions.
+- `lattice::Lattice`: The lattice.
+
+# Keyword arguments
 - `optimizer`: The optimizer.
 - `optimizer_options`: The options for the optimizer, e.g. `optimizer_options = Dict("NodefileSave" => 1)` for Gurobi.
+- `proximal_threshold`: The threshold for the proximal pairs.
 """
-function build_linear_problem(
-        grid_size::NTuple{N, Int},
-        population_list::AbstractVector{Int},
-        interaction_vector::AbstractVector{T},
-        proximal_pairs::AbstractVector{Tuple{Int, Int}};
-        optimizer = SCIP.Optimizer,
-        optimizer_options = Dict()
-        ) where {N, T<:Real}
-    csp = Model(optimizer)
-    num_grid_points = prod(grid_size)
-    num_species = length(population_list)
-    @variable(csp, 0 <= x[1:num_species*num_grid_points] <= 1, Int)
-    @variable(csp, 0 <= s[1:num_species*num_grid_points*(num_species*num_grid_points-1)÷2] <= 1, Int)
+function build_linear_problem(interaction,
+            ions::AbstractVector{Ion{D, T}},
+            populations::Dict{IonType{T}, Int},  # a dictionary of ion types and their populations
+            lattice::Lattice;
+            optimizer = SCIP.Optimizer,
+            optimizer_options = Dict(),
+            proximal_threshold = 0.75
+        ) where {D, T<:Real}
+    csp = Model(optimizer); set_silent(csp)
+    num_ions = length(ions)
+    unique_coordinates = unique!([ion.frac_pos for ion in ions])
+    @variable(csp, 0 <= x[1:num_ions] <= 1, Int)
+    @variable(csp, 0 <= s[1:num_ions*(num_ions-1)÷2] <= 1, Int)
 
-    for t in range(1, num_species)
-        @constraint(csp, sum(x[num_grid_points*(t-1)+p] for p in range(1, num_grid_points)) == population_list[t])
+    # each ion type has a constraint on the number of ions of that type
+    for (type, population) in populations
+        @constraint(csp, sum(x[i] for i in range(1, num_ions) if ions[i].type == type) == population)
     end
-    for p in range(1, num_grid_points)
-        @constraint(csp, sum(x[num_grid_points*(t-1)+p] for t in range(1, num_species)) <= 1)
+    # each grid point has at most one ion
+    for coord in unique_coordinates
+        @constraint(csp, sum(x[i] for i in range(1, num_ions) if ions[i].frac_pos == coord) <= 1)
     end
-    for (i, j) in proximal_pairs
-        @constraint(csp, x[i] + x[j] <= 1)
+    # ions are not allowed to be too close to each other
+    for i in 1:num_ions-1, j in i+1:num_ions
+        if too_close(ions[i], ions[j], lattice, proximal_threshold)
+            @constraint(csp, x[i] + x[j] <= 1)
+        end
     end
-    for i in range(1, num_species*num_grid_points-1)
-    for j in range(i+1, num_species*num_grid_points)
-        @constraint(csp, s[i + (j-1)*(j-2)÷2] <= x[i])
-        @constraint(csp, s[i + (j-1)*(j-2)÷2] <= x[j])
-        @constraint(csp, s[i + (j-1)*(j-2)÷2] >= x[i] + x[j] - 1)
+    # s is a "matrix" representing the co-existence of ions
+    energy = zero(eltype(s))
+    for i in range(1, num_ions-1)
+        for j in range(i+1, num_ions)
+            @constraint(csp, s[i + (j-1)*(j-2)÷2] <= x[i])
+            @constraint(csp, s[i + (j-1)*(j-2)÷2] <= x[j])
+            @constraint(csp, s[i + (j-1)*(j-2)÷2] >= x[i] + x[j] - 1)
+            energy += interaction(ions[i], ions[j], lattice) * s[i + (j-1)*(j-2)÷2]
         end
     end 
-    @objective(csp, Min, dot(interaction_vector, s))
+    # minimize the interaction energy
+    @objective(csp, Min, energy)
     for (key, value) in optimizer_options
         set_optimizer_attribute(csp, key, value)
     end
     optimize!(csp)
     assert_is_solved_and_feasible(csp)
-    return objective_value(csp), value.(x), value.(s)
+    return IonOptimizationResult(objective_value(csp), [ions[i] for i in 1:num_ions if value.(x)[i] ≈ 1])
+end
+
+function too_close(ion_a::Ion, ion_b::Ion, lattice::Lattice, c::Float64)
+    return minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) < c * (radii(ion_a) + radii(ion_b))
+end
+
+function build_proximal_pairs(ion_list::AbstractVector{Ion{D, T}}, lattice::Lattice{D, T}, c::Float64) where {D, T}
+    return [(i,j) for i in range(1, length(ion_list)) for j in range(i+1, length(ion_list)) if too_close(ion_list[i], ion_list[j], lattice, c)]
 end
 
 """
@@ -70,7 +95,7 @@ function build_quadratic_problem(
         optimizer_options = Dict()
         ) where {N, T<:Real}
 
-    csp = Model(optimizer)
+    csp = Model(optimizer); set_silent(csp)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
     @variable(csp, x[1:num_species*num_grid_points], Bin)
@@ -87,6 +112,6 @@ function build_quadratic_problem(
     end
     optimize!(csp)
     assert_is_solved_and_feasible(csp)
-    return objective_value(csp), value.(x), csp
+    return IonOptimizationResult(objective_value(csp), [ions[i] for i in 1:num_species*num_grid_points if value.(x)[i] ≈ 1])
 end
 

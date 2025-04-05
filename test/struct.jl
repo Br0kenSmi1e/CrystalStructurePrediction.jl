@@ -9,21 +9,21 @@ using CrystalStructurePrediction: species, charge, radii, fractional, cartesian,
     @test radii(ion_type) == 1.35
     
     # Test Ion constructor
-    ion = Ion(ion_type, [0.5, 0.5, 0.5])
+    ion = Ion(ion_type, [1//2, 1//2, 1//2])
     @test species(ion) == :O
     @test charge(ion) == -2
     @test radii(ion) == 1.35
-    @test ion.frac_pos ≈ [0.5, 0.5, 0.5]
+    @test ion.frac_pos ≈ [1//2, 1//2, 1//2]
     
     # Test Lattice constructor
-    vectors = [0.5 0.0 0.0; 0.0 0.5 0.0; 0.0 0.0 0.5]
+    vectors = [0.5 0 0; 0 0.5 0; 0 0 0.5]
     pbc = (true, true, true)
     lattice = Lattice(vectors, pbc)
     @test lattice.vectors ≈ vectors
     @test lattice.pbc == pbc
-    @test minimum_distance([0.0, 0.0, 0.0], [0.9, 0.9, 0.9], lattice) ≈ 0.05 * sqrt(3)
-    @test distance([0.0, 0.0, 0.0], [0.9, 0.9, 0.9]) ≈ sqrt(3) * 0.9
-    @test distance(lattice, [0.0, 0.0, 0.0], [0.9, 0.9, 0.9]) ≈ sqrt(3) * 0.45
+    @test minimum_distance([0//1, 0, 0], [9//10, 9//10, 9//10], lattice) ≈ 0.05 * sqrt(3)
+    @test distance([0//1, 0, 0], [9//10, 9//10, 9//10]) ≈ sqrt(3) * 0.9
+    @test distance(lattice, [0//1, 0, 0], [9//10, 9//10, 9//10]) ≈ sqrt(3) * 0.45
 
     # Test fractional and cartesian conversion
     vectors = randn(3, 3)

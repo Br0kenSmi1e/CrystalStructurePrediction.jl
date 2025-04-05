@@ -27,11 +27,11 @@ volume(lt::Lattice) = abs(det(lt.vectors))
 
 # the minimum distance between two ions in a lattice
 # TODO: this is the notoriously hard closest vector problem, try solve it with maybe integer programming?
-function minimum_distance(frac_pos_a::AbstractVector{T}, frac_pos_b::AbstractVector{T}, lattice::Lattice{D, T}) where {D, T}
+function minimum_distance(frac_pos_a::AbstractVector{Rational{Int}}, frac_pos_b::AbstractVector{Rational{Int}}, lattice::Lattice{D, T}) where {D, T}
     return minimum(shift -> distance(lattice, frac_pos_b + SVector(shift), frac_pos_a), Iterators.product(ntuple(x->-1:1, D)...))
 end
 distance(a::AbstractVector{T}, b::AbstractVector{T}) where T = norm(a - b)
-distance(lt::Lattice{D, T}, frac_pos_a::AbstractVector{T}, frac_pos_b::AbstractVector{T}) where {D, T} = norm(cartesian(lt, frac_pos_b - frac_pos_a))
+distance(lt::Lattice{D, T}, frac_pos_a::AbstractVector{Rational{Int}}, frac_pos_b::AbstractVector{Rational{Int}}) where {D, T} = norm(cartesian(lt, frac_pos_b - frac_pos_a))
 
 """
     periodic_sum(interaction, depth)
@@ -88,13 +88,12 @@ An ion is a type with a fractional position.
 """
 struct Ion{D, T}
     type::IonType{T}
-    frac_pos::SVector{D, T}
+    frac_pos::SVector{D, Rational{Int}}
 end
-function Ion(type::IonType{T}, frac_pos) where T
+function Ion(type::IonType{T}, frac_pos::AbstractVector{Rational{Int}}) where T
     return Ion(type, SVector(frac_pos...))
 end
 
 charge(ion::Ion) = ion.type.charge
 radii(ion::Ion) = ion.type.radii
 species(ion::Ion) = ion.type.species
-Base.isapprox(a::Ion, b::Ion; kwargs...) = (a.type == b.type) && isapprox(a.frac_pos, b.frac_pos; kwargs...)

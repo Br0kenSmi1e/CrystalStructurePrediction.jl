@@ -39,7 +39,7 @@ function interaction_energy(
         reciprocal_space_potential(k, cartesian(lattice, ion_b.frac_pos - ion_a.frac_pos), alpha)
     end
     # buckingham energy
-    energy += if ion_a ≈ ion_b || minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) > buckingham_threshold * (radii(ion_a) + radii(ion_b))
+    energy += if ion_a == ion_b || minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) > buckingham_threshold * (radii(ion_a) + radii(ion_b))
         periodic_sum(buckingham_depth) do shift
             r = distance(lattice, ion_b.frac_pos + SVector(shift), ion_a.frac_pos)
             r ≈ 0 && return zero(T)  # only sum over non-zero r
@@ -49,7 +49,7 @@ function interaction_energy(
         buckingham_penalty
     end
     # radii penalty
-    if !(ion_a ≈ ion_b) && minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) / (radii(ion_a) + radii(ion_b)) > radii_threshold
+    if !(ion_a == ion_b) && minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) / (radii(ion_a) + radii(ion_b)) > radii_threshold
         energy += radii_penalty
     end
     return energy
@@ -95,7 +95,7 @@ Create a list of ions on a grid.
 where `t1, ..., tm` are the types of the ions and `p1, ..., pn` are the fractional positions of the ions on the grid.
 """
 function ions_on_grid(grid_size::NTuple{N, Int}, type_list::AbstractVector{IonType{T}}) where {N, T}
-    return [Ion(type_list[t], (ci.I .- 1) ./ grid_size) for t in range(1, length(type_list)) for ci in CartesianIndices(grid_size)]
+    return [Ion(type_list[t], SVector((ci.I .- 1) .// grid_size)) for t in range(1, length(type_list)) for ci in CartesianIndices(grid_size)]
 end
 
 function build_matrix(
@@ -126,9 +126,4 @@ function build_vector(
         end
     end
     return vector
-end
-
-function build_proximal_pairs(ion_list::AbstractVector{Ion{D, T}}, lattice::Lattice{D, T}, c::Float64) where {D, T}
-    isProximal = (i, j) -> CrystalStructurePrediction.minimum_distance(ion_list[i].frac_pos, ion_list[j].frac_pos, lattice) < c * (radii(ion_list[i]) + radii(ion_list[j]))
-    return [(i,j) for i in range(1, length(ion_list)) for j in range(i+1, length(ion_list)) if isProximal(i, j)]
 end
