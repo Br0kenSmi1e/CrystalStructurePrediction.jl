@@ -4,7 +4,7 @@ using SpecialFunctions
 using LinearAlgebra
 using JuMP
 using HiGHS
-using Gurobi
+using StaticArrays
 
 export Lattice, Ion
 export build_grid
@@ -16,7 +16,6 @@ export build_linear_problem, build_quadratic_problem
 
 include("struct.jl")
 include("interaction.jl")
-include("penalty.jl")
 include("build_matrix.jl")
 include("build_problem.jl")
 
