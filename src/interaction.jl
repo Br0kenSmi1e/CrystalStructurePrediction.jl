@@ -57,7 +57,7 @@ end
 
 # What is this potential function? Does it have a name?
 function real_space_potential(r::T, alpha::T) where T<:Real
-    return T(r ≈ 0 ? - alpha / sqrt(π) : erfc(alpha * r) / (2 * r))
+    return T(r ≈ 0 ? -alpha / sqrt(π) : erfc(alpha * r) / (2 * r))
 end
 
 function reciprocal_space_potential(k::AbstractVector{T}, x::AbstractVector{T}, alpha::T) where T<:Real

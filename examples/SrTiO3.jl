@@ -1,61 +1,29 @@
 using CrystalStructurePrediction
 using CairoMakie, SCIP
 
-"""
-    setup_crystal_parameters()
-
-Setup the parameters for SrTiO3 crystal structure prediction.
-Returns grid_size, population_list, species_list, charge_list, radii_list, lattice, depth, and alpha.
-"""
-function setup_crystal_parameters()
-    # Crystal structure parameters
-    grid_size = (2, 2, 2)
-    population_list = [1, 1, 3]  # 1 Sr, 1 Ti, 3 O atoms
-    ion_types = [IonType(:Sr, +2, 1.18), IonType(:Ti, +4, 0.42), IonType(:O, -2, 1.35)]
+# Run the crystal structure prediction, alpha is the Ewald parameter
+function run_crystal_structure_prediction(grid_size, populations, lattice, alpha; use_quadratic_problem::Bool=false)
+    @info "Setting up crystal structure prediction with"
+    @info "Grid size: $grid_size"
+    @info "Populations: $populations"
     
-    # Lattice parameters
-    lattice_constant = 3.899  # Å
-    L = lattice_constant * [1 0 0; 0 1 0; 0 0 1]
-    lattice = Lattice(L, (true, true, true))
+    # Build ion list and proximal pairs
+    ion_list = ions_on_grid(grid_size, collect(keys(populations)))
+    @info "Created ion list with $(length(ion_list)) possible ion positions"
     
     # Ewald summation parameters
     depth = (4, 4, 4)
-    alpha = 2 / lattice_constant
-    
-    return grid_size, population_list, ion_types, lattice, depth, alpha
-end
-
-"""
-    run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
-
-Run the crystal structure prediction for SrTiO3.
-
-# Arguments
-- `use_quadratic_problem::Bool`: Whether to use the quadratic problem. Only limited solvers support the quadratic problem, e.g. Gurobi (a commercial solver).
-"""
-function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
-    # Setup parameters
-    grid_size, population_list, ion_types, lattice, depth, alpha = setup_crystal_parameters()
-    
-    @info "Setting up crystal structure prediction for SrTiO3"
-    @info "Grid size: $grid_size"
-    @info "Population: $population_list"
-    @info "Ion types: $ion_types"
-    
-    # Build ion list and proximal pairs
-    ion_list = ions_on_grid(grid_size, ion_types)
-    @info "Created ion list with $(length(ion_list)) possible ion positions"
-    
+    # Q: how to set alpha?
     if use_quadratic_problem
         # Solve the quadratic problem
         @info "Solving quadratic optimization problem..."
-        res = build_quadratic_problem(ion_list, Dict(ion_types .=> population_list), lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
+        res = build_quadratic_problem(ion_list, populations, lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
             interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
         end
     else
         # Solve the linear problem
         @info "Solving linear optimization problem..."
-        res = build_linear_problem(ion_list, Dict(ion_types .=> population_list), lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
+        res = build_linear_problem(ion_list, populations, lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
             interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
         end
     end
@@ -136,13 +104,27 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
     return fig
 end
 
-# Run the prediction
-res = run_crystal_structure_prediction(; use_quadratic_problem=false)
+####### Run the prediction #######
+function run_SrTiO3_prediction()
+    # Crystal structure parameters
+    lattice_constant = 3.899  # Å
+    lattice = Lattice(lattice_constant .* [1 0 0; 0 1 0; 0 0 1], (true, true, true))
+    grid_size = (2, 2, 2)
+    populations = Dict(
+        IonType(:Sr, +2, 1.18) => 1,  # 1 Sr atom
+        IonType(:Ti, +4, 0.42) => 1,  # 1 Ti atom
+        IonType(:O, -2, 1.35) => 3    # 3 O atoms
+    )
 
-# Generate and save the visualization
-lattice = setup_crystal_parameters()[4]
-fig = visualize_crystal_structure(res.selected_ions, lattice, [0.0, 0.0, 0.5])
+    res = run_crystal_structure_prediction(grid_size, populations, lattice, 2.0/lattice_constant; use_quadratic_problem=false)
 
-filename = joinpath(@__DIR__, "SrTiO3-structure.png")
-save(filename, fig, dpi=20)
-@info "Saved crystal structure visualization to: $filename"
+    # Generate and save the visualization
+    origin = res.selected_ions[findfirst(x -> x.type.species == :Sr, res.selected_ions)].frac_pos
+    fig = visualize_crystal_structure(res.selected_ions, lattice, origin)
+
+    filename = joinpath(@__DIR__, "SrTiO3-structure.png")
+    save(filename, fig, dpi=20)
+    @info "Saved crystal structure visualization to: $filename"
+end
+
+run_SrTiO3_prediction()
