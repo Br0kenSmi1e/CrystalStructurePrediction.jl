@@ -145,7 +145,7 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
     # Add legend with unique entries
     unique_species = unique([ion.type for ion in selected_ions])
     legend_elements = [MarkerElement(color = properties[sp.species].color, marker = :circle, markersize = sp.radii * 20) for sp in unique_species]
-    legend_labels = [string(sp) for sp in unique_species]
+    legend_labels = [string(sp.species) for sp in unique_species]
     
     Legend(fig[1, 2], legend_elements, legend_labels, "Species", patchsize = (30, 30))
     # Remove decorations and axis
@@ -159,7 +159,7 @@ energy, selected_ions, csp = run_crystal_structure_prediction(; use_quadratic_pr
 
 # Generate and save the visualization
 lattice = setup_crystal_parameters()[4]
-fig = visualize_crystal_structure(selected_ions, lattice, [0.0, 0.5, 0.5])
+fig = visualize_crystal_structure(selected_ions, lattice, [0.0, 0.0, 0.5])
 
 filename = joinpath(@__DIR__, "SrTiO3-structure.png")
 save(filename, fig, dpi=20)
