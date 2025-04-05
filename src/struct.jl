@@ -34,6 +34,19 @@ distance(a::AbstractVector{T}, b::AbstractVector{T}) where T = norm(a - b)
 distance(lt::Lattice{D, T}, frac_pos_a::AbstractVector{T}, frac_pos_b::AbstractVector{T}) where {D, T} = norm(cartesian(lt, frac_pos_b - frac_pos_a))
 
 """
+    periodic_sum(interaction, depth)
+
+Compute periodic summation of interaction to given depth.
+
+# Arguments
+- `interaction<:Function`: the interaction energy, given the shift as a list of integers.
+- `depth::NTuple{N, Int}`: summation depth on the dimensions.
+"""
+function periodic_sum(interaction::FT, depth::NTuple{N, Int}) where {N, FT<:Function}
+    return sum(interaction, Iterators.product(ntuple(i->-depth[i]:depth[i], N)...))
+end
+
+"""
     IonType{T}
     IonType(species::Symbol, charge::Int, radii::T)
 

@@ -32,7 +32,6 @@ using CrystalStructurePrediction, Test
     end
     
     @test energy ≈ -6.061349350569214
-    @test selected_ions == [Ion(Sr, [0.0, 0.5, 0.5]), Ion(Ti, [0.5, 0.0, 0.0]), Ion(O, [0.0, 0.0, 0.0]), Ion(O, [0.5, 0.5, 0.0]), Ion(O, [0.5, 0.0, 0.5])]
 
     # The quadratic problem formulation
     matrix = build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))

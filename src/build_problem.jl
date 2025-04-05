@@ -1,3 +1,4 @@
+# TODO: remove this function
 function build_problem(
         grid_size::AbstractVector{Int},
         population_list::AbstractVector{Int},
@@ -21,6 +22,19 @@ function build_problem(
     return value.(x)
 end
 
+"""
+    build_linear_problem(grid_size, population_list, interaction_vector, proximal_pairs; optimizer = SCIP.Optimizer, optimizer_options = Dict())
+
+Build a linear problem for crystal structure prediction. Suited for solvers not supporting quadratic constraints.
+
+# Arguments
+- `grid_size::NTuple{N, Int}`: The size of the grid.
+- `population_list::AbstractVector{Int}`: The number of atoms of each species.
+- `interaction_vector::AbstractVector{T}`: The interaction vector.
+- `proximal_pairs::AbstractVector{Tuple{Int, Int}}`: The proximal pairs.
+- `optimizer`: The optimizer.
+- `optimizer_options`: The options for the optimizer, e.g. `optimizer_options = Dict("NodefileSave" => 1)` for Gurobi.
+"""
 function build_linear_problem(
         grid_size::NTuple{N, Int},
         population_list::AbstractVector{Int},
@@ -61,13 +75,7 @@ function build_linear_problem(
 end
 
 """
-    build_quadratic_problem(
-        grid_size::NTuple{N, Int},
-        population_list::AbstractVector{Int},
-        interaction_matrix::AbstractMatrix{T};
-        optimizer = SCIP.Optimizer,
-        optimizer_options = Dict()
-        ) where {N, T<:Real}
+    build_quadratic_problem(grid_size, population_list, interaction_matrix; optimizer = SCIP.Optimizer, optimizer_options = Dict())
 
 Build a quadratic problem for crystal structure prediction.
 
