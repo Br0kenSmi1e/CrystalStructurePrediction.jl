@@ -4,9 +4,8 @@ using CrystalStructurePrediction, Test
     # Crystal structure parameters
     grid_size = (2, 2, 2)
     population_list = [1, 1, 3]  # 1 Sr, 1 Ti, 3 O atoms
-    species_list = [:Sr, :Ti, :O]
-    charge_list = [+2, +4, -2]
-    radii_list = [1.18, 0.42, 1.35]
+    Sr, Ti, O = IonType(:Sr, 2, 1.18), IonType(:Ti, 4, 0.42), IonType(:O, -2, 1.35)
+    type_list = [Sr, Ti, O]
     
     # Lattice parameters
     lattice_constant = 3.899  # Å
@@ -18,7 +17,7 @@ using CrystalStructurePrediction, Test
     alpha = 2 / lattice_constant
     
     # Build ion list and proximal pairs
-    ion_list = build_ion_list(grid_size, species_list, charge_list, radii_list)
+    ion_list = build_ion_list(grid_size, type_list)
     proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)
     
     # Solve the linear problem
@@ -33,7 +32,7 @@ using CrystalStructurePrediction, Test
     end
     
     @test energy ≈ -6.061349350569214
-    @test selected_ions == [Ion{3, Float64}(:Sr, 2, 1.18, [0.0, 0.5, 0.5]), Ion{3, Float64}(:Ti, 4, 0.42, [0.5, 0.0, 0.0]), Ion{3, Float64}(:O, -2, 1.35, [0.0, 0.0, 0.0]), Ion{3, Float64}(:O, -2, 1.35, [0.5, 0.5, 0.0]), Ion{3, Float64}(:O, -2, 1.35, [0.5, 0.0, 0.5])]
+    @test selected_ions == [Ion(Sr, [0.0, 0.5, 0.5]), Ion(Ti, [0.5, 0.0, 0.0]), Ion(O, [0.0, 0.0, 0.0]), Ion(O, [0.5, 0.5, 0.0]), Ion(O, [0.5, 0.0, 0.5])]
 
     # The quadratic problem formulation
     matrix = build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))

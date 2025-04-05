@@ -122,11 +122,12 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
     end
     
     # Plot the ions
-    properties = Dict(:Sr => (color = :green, size = 30), :Ti => (color = :aqua, size = 25), :O => (color = :red, size = 10))
+    properties = Dict(:Sr => (color = :green,), :Ti => (color = :aqua,), :O => (color = :red,))
     
     # Plot each ion
     for ion in selected_ions
         # Plot the ion at its position and all periodic images within the unit cell
+        coordinates = []
         for dx in -1:1, dy in -1:1, dz in -1:1
             # Add periodic image shift vector
             offset = [dx, dy, dz] .+ shift
@@ -135,17 +136,18 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
             if all(0 .<= shifted_pos .<= 1)
                 # Convert to Cartesian coordinates
                 shifted_cart_pos = lattice.vectors * shifted_pos
-                scatter!(ax, [shifted_cart_pos[1]], [shifted_cart_pos[2]], [shifted_cart_pos[3]], 
-                         color = properties[ion.species].color, 
-                         markersize = properties[ion.species].size,
-                         label = string(ion.species))
+                push!(coordinates, shifted_cart_pos)
             end
         end
+        scatter!(ax, coordinates, 
+                    color = properties[ion.species].color, 
+                    markersize = ion.radii * 20,
+                    label = string(ion.species))
     end
  
     # Add legend with unique entries
     unique_species = unique([ion.species for ion in selected_ions])
-    legend_elements = [MarkerElement(color = properties[sp].color, marker = :circle, markersize = properties[sp].size) for sp in unique_species]
+    legend_elements = [MarkerElement(color = properties[sp].color, marker = :circle, markersize = sp.radii * 20) for sp in unique_species]
     legend_labels = [string(sp) for sp in unique_species]
     
     Legend(fig[1, 2], legend_elements, legend_labels, "Species", patchsize = (30, 30))

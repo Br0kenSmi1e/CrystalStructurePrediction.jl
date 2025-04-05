@@ -8,8 +8,8 @@ using CrystalStructurePrediction: interaction_energy, real_space_sum, reciprocal
 end
 
 @testset "real_space_sum" begin
-    ion_a = Ion(:none, 1, 0.0, rand(3))
-    ion_b = Ion(:none, 2, 0.0, rand(3))
+    ion_a = Ion(IonType(:none, 1, 0.0), rand(3))
+    ion_b = Ion(IonType(:none, 2, 0.0), rand(3))
     lattice = Lattice(rand(3,3), (true, true, true))
     alpha = 2.0
     for depth in range(0,4)
@@ -19,8 +19,8 @@ end
 end
 
 @testset "reciprocal_space_sum" begin
-    ion_a = Ion(:none, 1, 0.0, rand(3))
-    ion_b = Ion(:none, 2, 0.0, rand(3))
+    ion_a = Ion(IonType(:none, 1, 0.0), rand(3))
+    ion_b = Ion(IonType(:none, 2, 0.0), rand(3))
     lattice = Lattice(rand(3,3), (true, true, true))
     alpha = 2.0
     for depth in range(0,4)
@@ -30,8 +30,8 @@ end
 end
 
 @testset "buckingham_sum" begin
-    ion_a = Ion(:Sr, 1, 0.0, rand(3))
-    ion_b = Ion(:O, 2, 0.0, rand(3))
+    ion_a = Ion(IonType(:Sr, 1, 0.0), rand(3))
+    ion_b = Ion(IonType(:O, 2, 0.0), rand(3))
     lattice = Lattice(rand(3,3), (true, true, true))
     for depth in range(0,4)
         depth_list = ntuple(x->depth, 3)

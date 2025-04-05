@@ -3,11 +3,9 @@ return a list of ions in the format of:
 `[ion(t1, p1), ion(t1, p2), ..., ion(t1,pn), ion(t2, p1), ..., ion(tm, pn)]`
 """
 function build_ion_list(grid_size::NTuple{N, Int},
-        species_list::AbstractVector{Symbol},
-        charge_list::AbstractVector{Int},
-        radii_list::AbstractVector{Float64}
-        ) where N
-    return [Ion(species_list[t], charge_list[t], radii_list[t], (ci.I .- 1) ./ grid_size) for t in range(1, length(species_list)) for ci in vec(CartesianIndices(grid_size))]
+        type_list::AbstractVector{IonType{T}},
+        ) where {N, T}
+    return [Ion(type_list[t], (ci.I .- 1) ./ grid_size) for t in range(1, length(type_list)) for ci in vec(CartesianIndices(grid_size))]
 end
 
 function interaction_energy(
@@ -48,6 +46,6 @@ function build_vector(
 end
 
 function build_proximal_pairs(ion_list::AbstractVector{Ion{D, T}}, lattice::Lattice{D, T}, c::Float64) where {D, T}
-    isProximal = (i, j) -> CrystalStructurePrediction.minimum_distance(ion_list[i], ion_list[j], lattice) < c * (ion_list[i].radii + ion_list[j].radii)
+    isProximal = (i, j) -> CrystalStructurePrediction.minimum_distance(ion_list[i].frac_pos, ion_list[j].frac_pos, lattice) < c * (radii(ion_list[i]) + radii(ion_list[j]))
     return [(i,j) for i in range(1, length(ion_list)) for j in range(i+1, length(ion_list)) if isProximal(i, j)]
 end

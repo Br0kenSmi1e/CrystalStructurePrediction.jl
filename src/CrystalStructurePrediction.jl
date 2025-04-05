@@ -6,7 +6,7 @@ using JuMP
 using SCIP
 using StaticArrays
 
-export Lattice, Ion
+export Lattice, Ion, IonType
 export build_ion_list, build_vector
 export build_matrix, interaction_energy
 export build_linear_problem, build_quadratic_problem, build_proximal_pairs
