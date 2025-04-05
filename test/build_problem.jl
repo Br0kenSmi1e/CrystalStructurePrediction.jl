@@ -20,13 +20,13 @@ using CrystalStructurePrediction, Test
     ion_list = ions_on_grid(grid_size, type_list)
     
     # Solve the linear problem
-    res_linear = build_linear_problem(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
+    res_linear = optimize_linear(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
         interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
     end
     @test res_linear.energy ≈ -6.061349350569214
 
     # The quadratic problem formulation
-    res_quadratic = build_quadratic_problem(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
+    res_quadratic = optimize_quadratic(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
         interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
     end
     @test res_quadratic.energy ≈ -6.061349350569214

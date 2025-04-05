@@ -4,7 +4,7 @@ struct IonOptimizationResult{D, T}
 end
 
 """
-    build_linear_problem(grid_size, population_list, interaction_vector, proximal_pairs; optimizer = SCIP.Optimizer, optimizer_options = Dict())
+    optimize_linear(interaction, ions, populations, lattice; optimizer = SCIP.Optimizer, optimizer_options = Dict(), proximal_threshold = 0.75)
 
 Build a linear problem for crystal structure prediction. Suited for solvers not supporting quadratic constraints.
 
@@ -19,7 +19,7 @@ Build a linear problem for crystal structure prediction. Suited for solvers not 
 - `optimizer_options`: The options for the optimizer, e.g. `optimizer_options = Dict("NodefileSave" => 1)` for Gurobi.
 - `proximal_threshold`: The threshold for the proximal pairs.
 """
-function build_linear_problem(interaction,
+function optimize_linear(interaction,
             ions::AbstractVector{Ion{D, T}},
             populations::Dict{IonType{T}, Int},  # a dictionary of ion types and their populations
             lattice::Lattice;
@@ -75,18 +75,22 @@ function too_close(ion_a::Ion, ion_b::Ion, lattice::Lattice, c::Float64)
 end
 
 """
-    build_quadratic_problem(grid_size, population_list, interaction_matrix; optimizer = SCIP.Optimizer, optimizer_options = Dict())
+    optimize_quadratic(interaction, ions, populations, lattice; optimizer = SCIP.Optimizer, optimizer_options = Dict(), proximal_threshold = 0.75)
 
 Build a quadratic problem for crystal structure prediction.
 
 # Arguments
-- `grid_size::NTuple{N, Int}`: The size of the grid.
-- `population_list::AbstractVector{Int}`: The number of atoms of each species.
-- `interaction_matrix::AbstractMatrix{T}`: The interaction matrix.
+- `interaction::Function`: The interaction function.
+- `ions::AbstractVector{Ion{D, T}}`: The ions.
+- `populations::Dict{IonType{T}, Int}`: The populations of the ions.
+- `lattice::Lattice`: The lattice.
+
+# Keyword arguments
 - `optimizer`: The optimizer.
 - `optimizer_options`: The options for the optimizer, e.g. `optimizer_options = Dict("NodefileSave" => 1)` for Gurobi.
+- `proximal_threshold`: The threshold for the proximal pairs.
 """
-function build_quadratic_problem(interaction,
+function optimize_quadratic(interaction,
             ion_list::AbstractVector{Ion{D, T}},
             populations::Dict{IonType{T}, Int},
             lattice::Lattice;

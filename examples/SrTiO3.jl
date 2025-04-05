@@ -15,15 +15,15 @@ function run_crystal_structure_prediction(grid_size, populations, lattice, alpha
     depth = (4, 4, 4)
     # Q: how to set alpha?
     if use_quadratic_problem
-        # Solve the quadratic problem
+        # Solve with the quadratic formulation
         @info "Solving quadratic optimization problem..."
-        res = build_quadratic_problem(ion_list, populations, lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
+        res = optimize_quadratic(ion_list, populations, lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
             interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
         end
     else
-        # Solve the linear problem
+        # Solve with the linear formulation
         @info "Solving linear optimization problem..."
-        res = build_linear_problem(ion_list, populations, lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
+        res = optimize_linear(ion_list, populations, lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
             interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
         end
     end

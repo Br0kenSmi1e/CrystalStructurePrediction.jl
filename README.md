@@ -25,5 +25,6 @@ If everything goes well, you should see the following crystal structure visualiz
 
 The center is Ti, surrounded by Sr (corner) and O (face center).
 
-## Reference
-[^Gusev2023] Gusev, V.V., Adamson, D., Deligkas, A., Antypov, D., Collins, C.M., Krysta, P., Potapov, I., Darling, G.R., Dyer, M.S., Spirakis, P., Rosseinsky, M.J., 2023. Optimality guarantees for crystal structure prediction. Nature 619, 68–72. https://doi.org/10.1038/s41586-023-06071-y
+## References
+
+[^Gusev2023]: Gusev, V.V., Adamson, D., Deligkas, A., Antypov, D., Collins, C.M., Krysta, P., Potapov, I., Darling, G.R., Dyer, M.S., Spirakis, P., Rosseinsky, M.J., 2023. Optimality guarantees for crystal structure prediction. Nature 619, 68–72. https://doi.org/10.1038/s41586-023-06071-y

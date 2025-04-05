@@ -1,7 +1,7 @@
 using Test
 using LinearAlgebra: det
 using CrystalStructurePrediction, StaticArrays
-using CrystalStructurePrediction: interaction_energy, build_matrix, ions_on_grid
+using CrystalStructurePrediction: interaction_energy, ions_on_grid
 
 @testset "lattice" begin
     lattice = Lattice(rand(3,3), (true, true, true))
