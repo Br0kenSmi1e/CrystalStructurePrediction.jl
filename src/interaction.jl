@@ -36,7 +36,7 @@ end
 
 function real_space_Ewald_sum(ion_a::Ion{D, T}, ion_b::Ion{D, T}, lattice::Lattice{D, T}, alpha::T, depth::NTuple{D, Int}) where {D, T}
     interaction = shift -> real_space_potential(distance(lattice, ion_b.frac_pos + SVector(shift), ion_a.frac_pos), alpha)
-    return charge(ion_a) * charge(ion_b) * 14.399645351950543 * periodic_sum(interaction, depth) / abs(det(lattice.vectors))
+    return charge(ion_a) * charge(ion_b) * 14.399645351950543 * periodic_sum(interaction, depth)
 end
 
 # What is this potential function? Does it have a name?
