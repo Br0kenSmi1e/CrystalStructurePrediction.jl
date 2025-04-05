@@ -46,43 +46,25 @@ function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
     ion_list = ions_on_grid(grid_size, ion_types)
     @info "Created ion list with $(length(ion_list)) possible ion positions"
     
-    proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)
-    @info "Identified $(length(proximal_pairs)) proximal pairs with cutoff 0.75"
-    
     if use_quadratic_problem
-        # Build interaction matrix
-        @info "Building interaction energy matrix..."
-        matrix = build_matrix(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
-    
         # Solve the quadratic problem
         @info "Solving quadratic optimization problem..."
-        energy, solution_x, csp = build_quadratic_problem(grid_size, population_list, matrix; optimizer=SCIP.Optimizer)
+        res = build_quadratic_problem(ion_list, Dict(ion_types .=> population_list), lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
+            interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
+        end
     else
-        # Build interaction vector
-        @info "Building interaction energy vector..."
-        vector = build_vector(ion_list, lattice, interaction_energy, (alpha, depth, depth, depth))
-        
         # Solve the linear problem
         @info "Solving linear optimization problem..."
-        energy, solution_x, csp = build_linear_problem(grid_size, population_list, vector, proximal_pairs; optimizer=SCIP.Optimizer)
-    end
-    
-    # Display results
-    @info "Optimization complete with energy: $energy"
-    @info "Solution structure:"
-    
-    selected_ions = []
-    for index in CartesianIndices(ion_list)
-        if solution_x[index] ≈ 1
-            push!(selected_ions, ion_list[index])
+        res = build_linear_problem(ion_list, Dict(ion_types .=> population_list), lattice; optimizer=SCIP.Optimizer) do ion_a, ion_b, lattice
+            interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
         end
     end
-    
-    for (i, ion) in enumerate(selected_ions)
-        @info "Ion $i: $ion"
+    # Display results
+    @info "Optimization complete with energy: $(res.energy)"
+    for ion in res.selected_ions
+        @info "Ion: $ion"
     end
-    
-    return energy, selected_ions, csp
+    return res
 end
 
 # Visualize the crystal structure
@@ -155,11 +137,11 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
 end
 
 # Run the prediction
-energy, selected_ions, csp = run_crystal_structure_prediction(; use_quadratic_problem=false)
+res = run_crystal_structure_prediction(; use_quadratic_problem=false)
 
 # Generate and save the visualization
 lattice = setup_crystal_parameters()[4]
-fig = visualize_crystal_structure(selected_ions, lattice, [0.0, 0.0, 0.5])
+fig = visualize_crystal_structure(res.selected_ions, lattice, [0.0, 0.0, 0.5])
 
 filename = joinpath(@__DIR__, "SrTiO3-structure.png")
 save(filename, fig, dpi=20)

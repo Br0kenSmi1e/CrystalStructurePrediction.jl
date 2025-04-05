@@ -18,7 +18,6 @@ using CrystalStructurePrediction, Test
     
     # Build ion list and proximal pairs
     ion_list = ions_on_grid(grid_size, type_list)
-    proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)
     
     # Solve the linear problem
     res_linear = build_linear_problem(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
@@ -30,5 +29,5 @@ using CrystalStructurePrediction, Test
     res_quadratic = build_quadratic_problem(ion_list, Dict(type_list .=> population_list), lattice) do ion_a, ion_b, lattice
         interaction_energy(ion_a, ion_b, lattice, alpha, depth, depth, depth)
     end
-    @test res_quadratic.energy ≈ -6.061349350569214/2
+    @test res_quadratic.energy ≈ -6.061349350569214
 end
