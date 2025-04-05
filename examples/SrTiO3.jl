@@ -43,7 +43,7 @@ function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
     @info "Ion types: $ion_types"
     
     # Build ion list and proximal pairs
-    ion_list = build_ion_list(grid_size, ion_types)
+    ion_list = ions_on_grid(grid_size, ion_types)
     @info "Created ion list with $(length(ion_list)) possible ion positions"
     
     proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)

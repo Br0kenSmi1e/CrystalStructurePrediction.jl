@@ -17,7 +17,7 @@ using CrystalStructurePrediction, Test
     alpha = 2 / lattice_constant
     
     # Build ion list and proximal pairs
-    ion_list = build_ion_list(grid_size, type_list)
+    ion_list = ions_on_grid(grid_size, type_list)
     proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)
     
     # Solve the linear problem
