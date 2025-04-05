@@ -46,7 +46,4 @@ function Ion(species::Symbol, charge::Int, radii::Float64, frac_pos)
     return Ion(species, charge, radii, SVector(frac_pos...))
 end
 
-# filter out the periodic unit vectors
-periodic_vectors(lattice::Lattice) = lattice.vectors[:, findall(lattice.pbc)]
-
-Base.isapprox(a::Ion, b::Ion) = (a.species == b.species) && (a.charge == b.charge) && (a.radii ≈ b.radii) && (norm(a.frac_pos - b.frac_pos - floor.(a.frac_pos - b.frac_pos))≈0)
+Base.isapprox(a::Ion, b::Ion; kwargs...) = (a.species == b.species) && (a.charge == b.charge) && isapprox(a.radii, b.radii; kwargs...) && isapprox(a.frac_pos, b.frac_pos; kwargs...)

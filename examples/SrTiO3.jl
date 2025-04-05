@@ -1,4 +1,5 @@
 using CrystalStructurePrediction
+using CairoMakie, SCIP
 
 """
     setup_crystal_parameters()
@@ -58,7 +59,7 @@ function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
     
         # Solve the quadratic problem
         @info "Solving quadratic optimization problem..."
-        energy, solution_x, csp = build_quadratic_problem(grid_size, population_list, matrix, proximal_pairs)
+        energy, solution_x, csp = build_quadratic_problem(grid_size, population_list, matrix; optimizer=SCIP.Optimizer)
     else
         # Build interaction vector
         @info "Building interaction energy vector..."
@@ -66,7 +67,7 @@ function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
         
         # Solve the linear problem
         @info "Solving linear optimization problem..."
-        energy, solution_x, csp = build_linear_problem(grid_size, population_list, vector, proximal_pairs)
+        energy, solution_x, csp = build_linear_problem(grid_size, population_list, vector, proximal_pairs; optimizer=SCIP.Optimizer)
     end
     
     # Display results
@@ -87,14 +88,7 @@ function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
     return energy, selected_ions, csp
 end
 
-# Run the prediction
-energy, selected_ions, csp = run_crystal_structure_prediction()
-
-# (-6.061349350569213, Any[Ion{3, Float64}(:Sr, 2, 1.18, [0.5, 0.5, 0.0]), Ion{3, Float64}(:Ti, 4, 0.42, [0.0, 0.0, 0.5]), Ion{3, Float64}(:O, -2, 1.35, [0.0, 0.0, 0.0]), Ion{3, Float64}(:O, -2, 1.35, [0.5, 0.0, 0.5]), Ion{3, Float64}(:O, -2, 1.35, [0.0, 0.5, 0.5])], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-
 # Visualize the crystal structure
-using CairoMakie
-
 function visualize_crystal_structure(selected_ions, lattice, shift)
     fig = Figure(; size = (300, 250))
     ax = Axis3(fig[1, 1], 
@@ -161,9 +155,12 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
     return fig
 end
 
+# Run the prediction
+energy, selected_ions, csp = run_crystal_structure_prediction(; use_quadratic_problem=false)
+
 # Generate and save the visualization
 lattice = setup_crystal_parameters()[6]
-fig = visualize_crystal_structure(selected_ions, lattice, [0.5, 0.5, 0])
+fig = visualize_crystal_structure(selected_ions, lattice, [0.0, 0.5, 0.5])
 
 filename = joinpath(@__DIR__, "SrTiO3-structure.png")
 save(filename, fig, dpi=20)

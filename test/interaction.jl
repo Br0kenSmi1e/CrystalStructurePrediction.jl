@@ -4,7 +4,7 @@ using CrystalStructurePrediction: interaction_energy, real_space_sum, reciprocal
 
 @testset "lattice" begin
     lattice = Lattice(rand(3,3), (true, true, true))
-    @test lattice.vectors ≈ CrystalStructurePrediction.periodic_vectors(lattice)
+    @test lattice isa Lattice
 end
 
 @testset "real_space_sum" begin
