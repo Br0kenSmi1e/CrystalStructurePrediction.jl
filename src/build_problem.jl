@@ -1,9 +1,10 @@
 function build_problem(
         grid_size::AbstractVector{Int},
         population_list::AbstractVector{Int},
-        interaction_matrix::AbstractMatrix{T}
+        interaction_matrix::AbstractMatrix{T};
+        optimizer = HiGHS.Optimizer
         ) where T<:Real
-    csp = Model(SCIP.Optimizer)
+    csp = Model(optimizer)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
     @variable(csp, x[1:num_species, 1:num_grid_points], Bin)
@@ -21,17 +22,18 @@ function build_problem(
 end
 
 function build_linear_problem(
-        grid_size::AbstractVector{Int},
+        grid_size::NTuple{N, Int},
         population_list::AbstractVector{Int},
         interaction_vector::AbstractVector{T},
-        proximal_pairs::AbstractVector{Tuple{Int, Int}}
-        ) where T<:Real
-    csp = Model(Gurobi.Optimizer)
+        proximal_pairs::AbstractVector{Tuple{Int, Int}};
+        optimizer = HiGHS.Optimizer
+        ) where {N, T<:Real}
+    csp = Model(optimizer)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
     @variable(csp, 0 <= x[1:num_species*num_grid_points] <= 1, Int)
     @variable(csp, 0 <= s[1:num_species*num_grid_points*(num_species*num_grid_points-1)÷2] <= 1, Int)
-    # @constraint(csp, sum(x[t, 1] for t in range(1, num_species)) == 1)
+
     for t in range(1, num_species)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for p in range(1, num_grid_points)) == population_list[t])
     end
@@ -54,18 +56,33 @@ function build_linear_problem(
     return objective_value(csp), value.(x), value.(s)
 end
 
-function build_quadratic_problem(
-        grid_size::AbstractVector{Int},
+"""
+    build_quadratic_problem(
+        grid_size::NTuple{N, Int},
         population_list::AbstractVector{Int},
         interaction_matrix::AbstractMatrix{T},
-        proximal_pairs::AbstractVector{Tuple{Int, Int}}
-        ) where T<:Real
+        optimizer
+        ) where {N, T<:Real}
 
-    csp = Model(Gurobi.Optimizer)
+Build a quadratic problem for crystal structure prediction.
+
+# Arguments
+- `grid_size::NTuple{N, Int}`: The size of the grid.
+- `population_list::AbstractVector{Int}`: The number of atoms of each species.
+- `interaction_matrix::AbstractMatrix{T}`: The interaction matrix.
+- `optimizer`: The optimizer.
+"""
+function build_quadratic_problem(
+        grid_size::NTuple{N, Int},
+        population_list::AbstractVector{Int},
+        interaction_matrix::AbstractMatrix{T},
+        optimizer
+        ) where {N, T<:Real}
+
+    csp = Model(optimizer)
     num_grid_points = prod(grid_size)
     num_species = length(population_list)
     @variable(csp, x[1:num_species*num_grid_points], Bin)
-    # @constraint(csp, sum(x[t, 1] for t in range(1, num_species)) == 1)
     for t in range(1, num_species)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for p in range(1, num_grid_points)) == population_list[t])
     end
@@ -73,24 +90,11 @@ function build_quadratic_problem(
     for p in range(2, num_grid_points)
         @constraint(csp, sum(x[num_grid_points*(t-1)+p] for t in range(1, num_species)) <= 1)
     end
-    # for (i, j) in proximal_pairs
-    #     @constraint(csp, x[i] + x[j] <= 1)
-    # end
-    # for index_a in CartesianIndices(ion_sheet)
-    #     for index_b in CartesianIndices(ion_sheet)
-    #         if norm(lattice.vectors * (ion_sheet[index_a].frac_pos - ion_sheet[index_b].frac_pos)) < 0.75 * (ion_sheet[index_a].radii + ion_sheet[index_b].radii)
-    #             @constraint(csp, x[index_a] + x[index_b] <= 1)
-    #         end
-    #     end
-    # end
     @objective(csp, Min, sum(interaction_matrix[i,j]*x[i]*x[j] for i in range(1, num_species*num_grid_points) for j in range(i+1, num_species*num_grid_points) if (j-i)%num_grid_points != 0))
-    # return csp
-    # set_optimizer_attribute(csp, "PoolSearchMode", 2)
-    # set_optimizer_attribute(csp, "PoolSolutions", 1)
     set_optimizer_attribute(csp, "NodefileStart", 1)
-    # set_optimizer_attribute(csp, "Cuts", 2)
     
     optimize!(csp)
     assert_is_solved_and_feasible(csp)
     return objective_value(csp), value.(x), csp
 end
+
