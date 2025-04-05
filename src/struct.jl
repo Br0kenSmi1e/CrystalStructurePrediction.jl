@@ -10,11 +10,26 @@ A lattice is a set of vectors that define the unit cell of a crystal.
 """
 struct Lattice{D, T, L}
     vectors::SMatrix{D, D, T, L}
+    # Q: why pbc is not used?
     pbc::NTuple{D, Bool}
 end
 function Lattice(vectors::AbstractMatrix{T}, pbc::NTuple{D, Bool}) where {D, T}
     return Lattice(SMatrix{D, D}(vectors), pbc)
 end
+# convert fractional coordinates to Cartesian coordinates
+cartesian(lt::Lattice, v) = lt.vectors * v
+# convert Cartesian coordinates to fractional coordinates
+fractional(lt::Lattice, v) = lt.vectors \ v
+# reciprocal lattice vectors
+reciprocal_vectors(lt::Lattice) = 2π .* transpose(inv(lt.vectors))
+
+# the minimum distance between two ions in a lattice
+# TODO: this is the notoriously hard closest vector problem, try solve it with maybe integer programming?
+function minimum_distance(frac_pos_a::AbstractVector{T}, frac_pos_b::AbstractVector{T}, lattice::Lattice{D, T}) where {D, T}
+    return minimum(shift -> distance(lattice, frac_pos_b + SVector(shift), frac_pos_a), Iterators.product(ntuple(x->-1:1, D)...))
+end
+distance(a::AbstractVector{T}, b::AbstractVector{T}) where T = norm(a - b)
+distance(lt::Lattice{D, T}, frac_pos_a::AbstractVector{T}, frac_pos_b::AbstractVector{T}) where {D, T} = norm(cartesian(lt, frac_pos_b - frac_pos_a))
 
 """
     IonType{T}

@@ -8,13 +8,6 @@ function build_ion_list(grid_size::NTuple{N, Int},
     return [Ion(type_list[t], (ci.I .- 1) ./ grid_size) for t in range(1, length(type_list)) for ci in vec(CartesianIndices(grid_size))]
 end
 
-function interaction_energy(
-        ion_a::Ion{D, T}, ion_b::Ion{D, T}, lattice::Lattice{D, T},
-        alpha::T, real_depth::NTuple{D, Int}, reciprocal_depth::NTuple{D, Int}, buckingham_depth::NTuple{D, Int}
-        ) where {D, T}
-    return real_space_sum(ion_a, ion_b, lattice, alpha, real_depth) + reciprocal_space_sum(ion_a, ion_b, lattice, alpha, reciprocal_depth) + buckingham_sum(ion_a, ion_b, lattice, buckingham_depth)# + radii_penalty(ion_a, ion_b, lattice, 0.75)
-end
-
 function build_matrix(
         ion_list::AbstractVector{Ion{D, T}},
         lattice::Lattice{D, T},

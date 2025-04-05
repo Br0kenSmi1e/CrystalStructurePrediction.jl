@@ -1,6 +1,6 @@
 using Test
 using CrystalStructurePrediction, StaticArrays
-using CrystalStructurePrediction: interaction_energy, real_space_sum, reciprocal_space_sum, buckingham_sum
+using CrystalStructurePrediction: interaction_energy, real_space_Ewald_sum, reciprocal_space_Ewald_sum, buckingham_sum
 
 @testset "lattice" begin
     lattice = Lattice(rand(3,3), (true, true, true))
@@ -14,18 +14,18 @@ end
     alpha = 2.0
     for depth in range(0,4)
         depth_list = ntuple(x->depth, 3)
-        @test real_space_sum(ion_a, ion_b, lattice, alpha, depth_list) ≈ real_space_sum(ion_b, ion_a, lattice, alpha, depth_list)
+        @test real_space_Ewald_sum(ion_a, ion_b, lattice, alpha, depth_list) ≈ real_space_Ewald_sum(ion_b, ion_a, lattice, alpha, depth_list)
     end
 end
 
-@testset "reciprocal_space_sum" begin
+@testset "reciprocal_space_Ewald_sum" begin
     ion_a = Ion(IonType(:none, 1, 0.0), rand(3))
     ion_b = Ion(IonType(:none, 2, 0.0), rand(3))
     lattice = Lattice(rand(3,3), (true, true, true))
     alpha = 2.0
     for depth in range(0,4)
         depth_list = ntuple(x->depth, 3)
-        @test reciprocal_space_sum(ion_a, ion_b, lattice, alpha, depth_list) ≈ reciprocal_space_sum(ion_b, ion_a, lattice, alpha, depth_list)
+        @test reciprocal_space_Ewald_sum(ion_a, ion_b, lattice, alpha, depth_list) ≈ reciprocal_space_Ewald_sum(ion_b, ion_a, lattice, alpha, depth_list)
     end
 end
 
