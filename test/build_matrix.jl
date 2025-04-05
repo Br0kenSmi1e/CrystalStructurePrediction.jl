@@ -1,6 +1,7 @@
 using Test
 using LinearAlgebra: det
 using CrystalStructurePrediction
+using CrystalStructurePrediction: interaction_energy, build_matrix, build_ion_list
 
 @testset "interaction_energy" begin
     lattice = Lattice(rand(3,3), (true, true, true))
