@@ -61,7 +61,6 @@ end
         grid_size::NTuple{N, Int},
         population_list::AbstractVector{Int},
         interaction_matrix::AbstractMatrix{T},
-        proximal_pairs::AbstractVector{Tuple{Int, Int}},
         optimizer
         ) where {N, T<:Real}
 
@@ -71,14 +70,12 @@ Build a quadratic problem for crystal structure prediction.
 - `grid_size::NTuple{N, Int}`: The size of the grid.
 - `population_list::AbstractVector{Int}`: The number of atoms of each species.
 - `interaction_matrix::AbstractMatrix{T}`: The interaction matrix.
-- `proximal_pairs::AbstractVector{Tuple{Int, Int}}`: The proximal pairs.
 - `optimizer`: The optimizer.
 """
 function build_quadratic_problem(
         grid_size::NTuple{N, Int},
         population_list::AbstractVector{Int},
         interaction_matrix::AbstractMatrix{T},
-        proximal_pairs::AbstractVector{Tuple{Int, Int}};
         optimizer
         ) where {N, T<:Real}
 

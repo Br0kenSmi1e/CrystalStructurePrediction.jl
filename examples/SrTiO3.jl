@@ -89,3 +89,82 @@ end
 
 # Run the prediction
 energy, selected_ions, csp = run_crystal_structure_prediction()
+
+# (-6.061349350569213, Any[Ion{3, Float64}(:Sr, 2, 1.18, [0.5, 0.5, 0.0]), Ion{3, Float64}(:Ti, 4, 0.42, [0.0, 0.0, 0.5]), Ion{3, Float64}(:O, -2, 1.35, [0.0, 0.0, 0.0]), Ion{3, Float64}(:O, -2, 1.35, [0.5, 0.0, 0.5]), Ion{3, Float64}(:O, -2, 1.35, [0.0, 0.5, 0.5])], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+# Visualize the crystal structure
+using CairoMakie
+
+function visualize_crystal_structure(selected_ions, lattice, shift)
+    fig = Figure(; size = (300, 250))
+    ax = Axis3(fig[1, 1], 
+               aspect = :data,
+               xlabel = "x", ylabel = "y", zlabel = "z",
+               title = "SrTiO3 Crystal Structure")
+       
+    # Add unit cell edges
+    cell_vertices = [
+        [0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],
+        [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]
+    ]
+    
+    # Convert to Cartesian coordinates
+    cell_vertices_cart = [lattice.vectors * v for v in cell_vertices]
+    
+    # Define edges of the unit cell
+    edges = [
+        (1, 2), (2, 3), (3, 4), (4, 1),  # Bottom face
+        (5, 6), (6, 7), (7, 8), (8, 5),  # Top face
+        (1, 5), (2, 6), (3, 7), (4, 8)   # Connecting edges
+    ]
+    
+    # Plot unit cell edges
+    for (i, j) in edges
+        lines!(ax, 
+               [cell_vertices_cart[i][1], cell_vertices_cart[j][1]],
+               [cell_vertices_cart[i][2], cell_vertices_cart[j][2]],
+               [cell_vertices_cart[i][3], cell_vertices_cart[j][3]],
+               color = :black, linewidth = 1)
+    end
+    
+    # Plot the ions
+    properties = Dict(:Sr => (color = :green, size = 30), :Ti => (color = :aqua, size = 25), :O => (color = :red, size = 10))
+    
+    # Plot each ion
+    for ion in selected_ions
+        # Plot the ion at its position and all periodic images within the unit cell
+        for dx in -1:1, dy in -1:1, dz in -1:1
+            # Add periodic image shift vector
+            offset = [dx, dy, dz] .+ shift
+            # Skip if the shifted position is outside the unit cell (0-1 range)
+            shifted_pos = ion.frac_pos + offset
+            if all(0 .<= shifted_pos .<= 1)
+                # Convert to Cartesian coordinates
+                shifted_cart_pos = lattice.vectors * shifted_pos
+                scatter!(ax, [shifted_cart_pos[1]], [shifted_cart_pos[2]], [shifted_cart_pos[3]], 
+                         color = properties[ion.species].color, 
+                         markersize = properties[ion.species].size,
+                         label = string(ion.species))
+            end
+        end
+    end
+ 
+    # Add legend with unique entries
+    unique_species = unique([ion.species for ion in selected_ions])
+    legend_elements = [MarkerElement(color = properties[sp].color, marker = :circle, markersize = properties[sp].size) for sp in unique_species]
+    legend_labels = [string(sp) for sp in unique_species]
+    
+    Legend(fig[1, 2], legend_elements, legend_labels, "Species", patchsize = (30, 30))
+    # Remove decorations and axis
+    hidedecorations!(ax)
+    hidespines!(ax)
+    return fig
+end
+
+# Generate and save the visualization
+lattice = setup_crystal_parameters()[6]
+fig = visualize_crystal_structure(selected_ions, lattice, [0.5, 0.5, 0])
+
+filename = joinpath(@__DIR__, "SrTiO3-structure.png")
+save(filename, fig, dpi=20)
+@info "Saved crystal structure visualization to: $filename"

@@ -4,11 +4,12 @@
 # ewald sum = real space sum + reciprocal space sum + "self" energy
 
 function build_shifts(depth::NTuple{N, Int}) where N
-    return [shift .- depth for shift in build_grid(2 .* depth .+ 1)]
+    return [SVector((shift.I .- 1) .- depth) for shift in vec(CartesianIndices(2 .* depth .+ 1))]
 end
 
 """
     summation(depth, interaction)
+
 Compute periodic summation of interaction to given depth.
 
 Argument:

@@ -7,7 +7,7 @@ function build_ion_list(grid_size::NTuple{N, Int},
         charge_list::AbstractVector{Int},
         radii_list::AbstractVector{Float64}
         ) where N
-    return [Ion(species_list[t], charge_list[t], radii_list[t], pos ./ grid_size) for t in range(1, length(species_list)) for pos in build_grid(grid_size)]
+    return [Ion(species_list[t], charge_list[t], radii_list[t], (ci.I .- 1) ./ grid_size) for t in range(1, length(species_list)) for ci in vec(CartesianIndices(grid_size))]
 end
 
 function interaction_energy(
