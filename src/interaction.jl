@@ -13,24 +13,45 @@ Compute the real space part of Ewald summation.
 - `ion_b::Ion{D, T}`: the second ion.
 - `lattice::Lattice{D, T}`: the lattice.
 - `alpha::T`: the Ewald parameter.
-- `depth::NTuple{D, Int}`: summation depth on the dimensions.
+- `real_depth::NTuple{D, Int}`: summation depth on the dimensions for the real space Ewald sum.
+- `reciprocal_depth::NTuple{D, Int}`: summation depth on the dimensions for the reciprocal space Ewald sum.
+- `buckingham_depth::NTuple{D, Int}`: summation depth on the dimensions for the Buckingham potential.
+
+# Keyword arguments
+- `buckingham_threshold::T=0.75`: the threshold for the Buckingham potential.
+- `buckingham_penalty::T=3e2`: the penalty for the Buckingham potential.
 """
 function interaction_energy(
         ion_a::Ion{D, T}, ion_b::Ion{D, T}, lattice::Lattice{D, T},
-        alpha::T, real_depth::NTuple{D, Int}, reciprocal_depth::NTuple{D, Int}, buckingham_depth::NTuple{D, Int}
+        alpha::T, real_depth::NTuple{D, Int}, reciprocal_depth::NTuple{D, Int}, buckingham_depth::NTuple{D, Int},
+        buckingham_threshold::T=0.75, buckingham_penalty::T=3e2
         ) where {D, T}
-    return real_space_Ewald_sum(ion_a, ion_b, lattice, alpha, real_depth) + reciprocal_space_Ewald_sum(ion_a, ion_b, lattice, alpha, reciprocal_depth) + buckingham_sum(ion_a, ion_b, lattice, buckingham_depth)# + radii_penalty(ion_a, ion_b, lattice, 0.75)
-
     # Q: What is the constant 14.399645351950543?
+    # real space Ewald sum
     real_space_energy = charge(ion_a) * charge(ion_b) * 14.399645351950543 * periodic_sum(real_depth) do shift
         real_space_potential(distance(lattice, ion_b.frac_pos + SVector(shift), ion_a.frac_pos), alpha)
     end
-    reciprocal_space_energy = charge(ion_a) * charge(ion_b) * 14.399645351950543 * periodic_sum(reciprocal_depth) do shift
+    # reciprocal space Ewald sum
+    reciprocal_space_energy = charge(ion_a) * charge(ion_b) * 14.399645351950543 / volume(lattice) * periodic_sum(reciprocal_depth) do shift
         reciprocal_space_potential(reciprocal_vectors(lattice) * SVector(shift), cartesian(lattice, ion_b.frac_pos - ion_a.frac_pos), alpha)
     end
-    buckingham_energy = charge(ion_a) * charge(ion_b) * 14.399645351950543 * periodic_sum(buckingham_depth) do shift
-        buckingham_potential(norm(cartesian(lattice, ion_b.frac_pos + SVector(shift) - ion_a.frac_pos)), buckingham_parameters(ion_a.type, ion_b.type)...)
+    # buckingham energy
+    buckingham_interaction = shift -> buckingham_potential(norm(cartesian(lattice, ion_b.frac_pos + SVector(shift) - ion_a.frac_pos)), buckingham_parameters(ion_a.type, ion_b.type)...)
+    buckingham_energy = if ion_a ≈ ion_b
+        periodic_sum(buckingham_interaction, buckingham_depth)
+    elseif minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) > buckingham_threshold * (radii(ion_a) + radii(ion_b))
+        periodic_sum(buckingham_interaction, buckingham_depth)
+    else
+        buckingham_penalty
     end
+
+    # radii penalty
+    # radii_penalty = if ion_a ≈ ion_b
+    #     zero(T)
+    # else
+    #     minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) / (radii(ion_a) + radii(ion_b)) > c ? zero(T) : penalty
+    # end
+    @show real_space_energy, reciprocal_space_energy, buckingham_energy
     return real_space_energy + reciprocal_space_energy + buckingham_energy
 end
 
@@ -70,14 +91,6 @@ Compute periodic summation of interaction to given depth.
 """
 function periodic_sum(interaction::FT, depth::NTuple{N, Int}) where {N, FT<:Function}
     return sum(interaction, Iterators.product(ntuple(i->-depth[i]:depth[i], N)...))
-end
-
-function radii_penalty(ion_a::Ion{D, T}, ion_b::Ion{D, T}, lattice::Lattice{D, T}, c::T, penalty::T=3e2) where {D, T}
-    if ion_a ≈ ion_b
-        return zero(T)
-    else
-        return minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) / (radii(ion_a) + radii(ion_b)) > c ? zero(T) : penalty
-    end
 end
 
 function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real

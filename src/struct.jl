@@ -22,6 +22,8 @@ cartesian(lt::Lattice, v) = lt.vectors * v
 fractional(lt::Lattice, v) = lt.vectors \ v
 # reciprocal lattice vectors
 reciprocal_vectors(lt::Lattice) = 2π .* transpose(inv(lt.vectors))
+# volume of the unit cell
+volume(lt::Lattice) = abs(det(lt.vectors))
 
 # the minimum distance between two ions in a lattice
 # TODO: this is the notoriously hard closest vector problem, try solve it with maybe integer programming?
