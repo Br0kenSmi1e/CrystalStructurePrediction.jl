@@ -11,9 +11,7 @@ function setup_crystal_parameters()
     # Crystal structure parameters
     grid_size = (2, 2, 2)
     population_list = [1, 1, 3]  # 1 Sr, 1 Ti, 3 O atoms
-    species_list = [:Sr, :Ti, :O]
-    charge_list = [+2, +4, -2]
-    radii_list = [1.18, 0.42, 1.35]
+    ion_types = [IonType(:Sr, +2, 1.18), IonType(:Ti, +4, 0.42), IonType(:O, -2, 1.35)]
     
     # Lattice parameters
     lattice_constant = 3.899  # Å
@@ -24,7 +22,7 @@ function setup_crystal_parameters()
     depth = (4, 4, 4)
     alpha = 2 / lattice_constant
     
-    return grid_size, population_list, species_list, charge_list, radii_list, lattice, depth, alpha
+    return grid_size, population_list, ion_types, lattice, depth, alpha
 end
 
 """
@@ -37,16 +35,15 @@ Run the crystal structure prediction for SrTiO3.
 """
 function run_crystal_structure_prediction(; use_quadratic_problem::Bool=false)
     # Setup parameters
-    grid_size, population_list, species_list, charge_list, radii_list, lattice, depth, alpha = setup_crystal_parameters()
+    grid_size, population_list, ion_types, lattice, depth, alpha = setup_crystal_parameters()
     
     @info "Setting up crystal structure prediction for SrTiO3"
     @info "Grid size: $grid_size"
-    @info "Population: $population_list $species_list"
-    @info "Charges: $charge_list"
-    @info "Ionic radii: $radii_list"
+    @info "Population: $population_list"
+    @info "Ion types: $ion_types"
     
     # Build ion list and proximal pairs
-    ion_list = build_ion_list(grid_size, species_list, charge_list, radii_list)
+    ion_list = build_ion_list(grid_size, ion_types)
     @info "Created ion list with $(length(ion_list)) possible ion positions"
     
     proximal_pairs = build_proximal_pairs(ion_list, lattice, 0.75)
@@ -140,14 +137,14 @@ function visualize_crystal_structure(selected_ions, lattice, shift)
             end
         end
         scatter!(ax, coordinates, 
-                    color = properties[ion.species].color, 
-                    markersize = ion.radii * 20,
-                    label = string(ion.species))
+                    color = properties[ion.type.species].color, 
+                    markersize = ion.type.radii * 20,
+                    label = string(ion.type.species))
     end
  
     # Add legend with unique entries
-    unique_species = unique([ion.species for ion in selected_ions])
-    legend_elements = [MarkerElement(color = properties[sp].color, marker = :circle, markersize = sp.radii * 20) for sp in unique_species]
+    unique_species = unique([ion.type for ion in selected_ions])
+    legend_elements = [MarkerElement(color = properties[sp.species].color, marker = :circle, markersize = sp.radii * 20) for sp in unique_species]
     legend_labels = [string(sp) for sp in unique_species]
     
     Legend(fig[1, 2], legend_elements, legend_labels, "Species", patchsize = (30, 30))
@@ -161,7 +158,7 @@ end
 energy, selected_ions, csp = run_crystal_structure_prediction(; use_quadratic_problem=false)
 
 # Generate and save the visualization
-lattice = setup_crystal_parameters()[6]
+lattice = setup_crystal_parameters()[4]
 fig = visualize_crystal_structure(selected_ions, lattice, [0.0, 0.5, 0.5])
 
 filename = joinpath(@__DIR__, "SrTiO3-structure.png")
