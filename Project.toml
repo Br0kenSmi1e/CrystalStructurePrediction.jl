@@ -4,22 +4,23 @@ authors = ["Br0kenSmi1e"]
 version = "1.0.0-DEV"
 
 [deps]
-HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SCIP = "82193955-e24f-5292-bf16-6f2c5261a85f"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-HiGHS = "1"
 JuMP = "1"
 LinearAlgebra = "1"
+SCIP = "0.12"
 SpecialFunctions = "2"
 StaticArrays = "1"
 julia = "1"
 
 [extras]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Documenter", "Test"]

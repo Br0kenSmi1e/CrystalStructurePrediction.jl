@@ -3,17 +3,15 @@ module CrystalStructurePrediction
 using SpecialFunctions
 using LinearAlgebra
 using JuMP
-using HiGHS
+using SCIP
 using StaticArrays
 
-export Lattice, Ion
-export build_ion_list, build_vector
-export build_matrix, interaction_energy
-export build_linear_problem, build_quadratic_problem
+export Lattice, Ion, IonType
+export ions_on_grid, interaction_energy
+export optimize_linear, optimize_quadratic
 
 include("struct.jl")
 include("interaction.jl")
-include("build_matrix.jl")
 include("build_problem.jl")
 
 end
