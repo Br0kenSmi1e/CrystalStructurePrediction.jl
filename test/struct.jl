@@ -17,17 +17,15 @@ using CrystalStructurePrediction: species, charge, radii, fractional, cartesian,
     
     # Test Lattice constructor
     vectors = [0.5 0 0; 0 0.5 0; 0 0 0.5]
-    pbc = (true, true, true)
-    lattice = Lattice(vectors, pbc)
+    lattice = Lattice(vectors)
     @test lattice.vectors ≈ vectors
-    @test lattice.pbc == pbc
     @test minimum_distance([0//1, 0, 0], [9//10, 9//10, 9//10], lattice) ≈ 0.05 * sqrt(3)
     @test distance([0//1, 0, 0], [9//10, 9//10, 9//10]) ≈ sqrt(3) * 0.9
     @test distance(lattice, [0//1, 0, 0], [9//10, 9//10, 9//10]) ≈ sqrt(3) * 0.45
 
     # Test fractional and cartesian conversion
     vectors = randn(3, 3)
-    lattice = Lattice(vectors, pbc)
+    lattice = Lattice(vectors)
     frac_pos = rand(3)
     cart_pos = cartesian(lattice, frac_pos)
     @test fractional(lattice, cart_pos) ≈ frac_pos

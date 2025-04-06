@@ -1,20 +1,19 @@
 """
     Lattice{D, T, L}
-    Lattice(vectors::AbstractMatrix{T}, pbc::NTuple{D, Bool}) where {D, T}
+    Lattice(vectors::AbstractMatrix{T}) where {D, T}
 
 A lattice is a set of vectors that define the unit cell of a crystal.
 
 # Fields
 - `vectors::SMatrix{D, D, T, L}`: The vectors that define the unit cell of a crystal.
-- `pbc::NTuple{D, Bool}`: The periodic boundary conditions.
 """
 struct Lattice{D, T, L}
     vectors::SMatrix{D, D, T, L}
-    # Q: why pbc is not used?
-    pbc::NTuple{D, Bool}
 end
-function Lattice(vectors::AbstractMatrix{T}, pbc::NTuple{D, Bool}) where {D, T}
-    return Lattice(SMatrix{D, D}(vectors), pbc)
+function Lattice(vectors::AbstractMatrix{T}) where {T}
+    D = size(vectors, 1)
+    @assert D == size(vectors, 2) "Vectors must be a square matrix"
+    return Lattice(SMatrix{D, D}(vectors))
 end
 # convert fractional coordinates to Cartesian coordinates
 cartesian(lt::Lattice, v) = lt.vectors * v

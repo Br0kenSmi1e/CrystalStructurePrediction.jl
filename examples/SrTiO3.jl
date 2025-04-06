@@ -109,7 +109,7 @@ end
 function run_SrTiO3_prediction()
     # Crystal structure parameters
     lattice_constant = 3.899  # Å
-    lattice = Lattice(lattice_constant .* [1 0 0; 0 1 0; 0 0 1], (true, true, true))
+    lattice = Lattice(lattice_constant .* [1 0 0; 0 1 0; 0 0 1])
     grid_size = (2, 2, 2)
     populations = Dict(
         IonType(:Sr, +2, 1.18) => 1,  # 1 Sr atom
