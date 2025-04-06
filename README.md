@@ -7,14 +7,11 @@ CrystalStructurePrediction is a Julia package for predicting crystal structures 
 The method is based on the integer programming formulation that detailed in [^Gusev2023].
 
 ## Usage
-1. Install the package: open Julia REPL and run
-```julia
-] dev https://github.com/Br0kenSmi1e/CrystalStructurePrediction.jl.git
-```
-
-2. Run the example: open a terminal and run
+The following commands will clone the repository, initialize the project, and run the SrTiO3 example.
+Just type the following commands in your terminal:
 ```bash
-cd ~/.julia/dev/CrystalStructurePrediction
+git clone https://github.com/Br0kenSmi1e/CrystalStructurePrediction.jl.git
+cd CrystalStructurePrediction.jl
 make init  # initialize the project
 make run-example  # run the SrTiO3 example
 ```
