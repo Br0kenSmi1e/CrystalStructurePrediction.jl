@@ -2,10 +2,12 @@ using CrystalStructurePrediction
 using CairoMakie, SCIP
 
 # Run the crystal structure prediction, alpha is the Ewald parameter
-function run_crystal_structure_prediction(grid_size, populations, lattice, alpha; use_quadratic_problem::Bool=false)
+function run_crystal_structure_prediction(grid_size, populations, lattice; use_quadratic_problem::Bool=false)
+    alpha = 2 / maximum(lattice.vectors)
     @info "Setting up crystal structure prediction with"
     @info "Grid size: $grid_size"
     @info "Populations: $populations"
+    @info "Ewald parameter: $alpha"
     
     # Build ion list and proximal pairs
     ion_list = ions_on_grid(grid_size, collect(keys(populations)))
@@ -13,7 +15,6 @@ function run_crystal_structure_prediction(grid_size, populations, lattice, alpha
     
     # Ewald summation parameters
     depth = (4, 4, 4)
-    # Q: how to set alpha?
     if use_quadratic_problem
         # Solve with the quadratic formulation
         @info "Solving quadratic optimization problem..."
@@ -108,7 +109,7 @@ end
 function run_SrTiO3_prediction()
     # Crystal structure parameters
     lattice_constant = 3.899  # Å
-    lattice = Lattice(lattice_constant .* [1 0 0; 0 1 0; 0 0 1], (true, true, true))
+    lattice = Lattice(lattice_constant .* [1 0 0; 0 1 0; 0 0 1])
     grid_size = (2, 2, 2)
     populations = Dict(
         IonType(:Sr, +2, 1.18) => 1,  # 1 Sr atom
@@ -116,7 +117,7 @@ function run_SrTiO3_prediction()
         IonType(:O, -2, 1.35) => 3    # 3 O atoms
     )
 
-    res = run_crystal_structure_prediction(grid_size, populations, lattice, 2.0/lattice_constant; use_quadratic_problem=false)
+    res = run_crystal_structure_prediction(grid_size, populations, lattice; use_quadratic_problem=false)
 
     # Generate and save the visualization
     origin = res.selected_ions[findfirst(x -> x.type.species == :Sr, res.selected_ions)].frac_pos

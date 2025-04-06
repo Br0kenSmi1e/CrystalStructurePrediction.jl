@@ -1,4 +1,18 @@
 """
+    BUCKINGHAM_PARAMETERS
+
+A map from the species of two ions to the Buckingham parameters: `(A, ρ, C)`.
+- `A`: the well depth.
+- `ρ`: the range parameter.
+- `C`: the Buckingham constant.
+"""
+const BUCKINGHAM_PARAMETERS = Dict(
+    minmax(:O, :O) => (1388.7, 0.36262, 175.0),
+    minmax(:Sr, :O) => (1952.39, 0.33685, 19.22),
+    minmax(:Ti, :O) => (4590.7279, 0.261, 0.0)
+)
+
+"""
     interaction_energy(ion_a, ion_b, lattice, alpha, real_depth, reciprocal_depth, buckingham_depth, buckingham_threshold, buckingham_penalty, radii_threshold, radii_penalty)
 
 Compute the interaction energy between two ions, which is a sum of the real space Ewald sum, the reciprocal space Ewald sum, the Buckingham potential, and the radii penalty.
@@ -18,6 +32,11 @@ Compute the interaction energy between two ions, which is a sum of the real spac
 - `radii_threshold::T=0.0`: the threshold for the radii penalty, defined as the ratio of the distance between the two ions to the sum of their radii.
 - `radii_penalty::T=0.0`: the penalty for the radii penalty.
 
+# Notes
+- The Buckingham potential is only summed over the species pairs that are present in the `CrystalStructurePrediction.BUCKINGHAM_PARAMETERS` dictionary:
+  $BUCKINGHAM_PARAMETERS
+  If you want to use a different potential, you can do so by setting the `BUCKINGHAM_PARAMETERS` dictionary to your desired potential.
+
 # References
 - a great short note: https://www.cs.cornell.edu/courses/cs428/2006fa/Ewald%20Sum.pdf
 """
@@ -26,7 +45,7 @@ function interaction_energy(
         alpha::T, real_depth::NTuple{D, Int}, reciprocal_depth::NTuple{D, Int}, buckingham_depth::NTuple{D, Int},
         buckingham_threshold::T=0.75, buckingham_penalty::T=3e2, radii_threshold::T=0.0, radii_penalty::T=0.0
         ) where {D, T}
-    # Q: What is the constant 14.399645351950543?
+    # k * e / Ang^2 = 14.399645351950543, where k is the Coulomb constant, e is the elementary charge, and Ang is the Angstrom unit 10^-10 m.
     # real space Ewald sum
     energy = zero(T)
     energy += charge(ion_a) * charge(ion_b) * 14.399645351950543 * periodic_sum(real_depth) do shift
@@ -39,14 +58,18 @@ function interaction_energy(
         reciprocal_space_potential(k, cartesian(lattice, ion_b.frac_pos - ion_a.frac_pos), alpha)
     end
     # buckingham energy
-    energy += if ion_a == ion_b || minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) > buckingham_threshold * (radii(ion_a) + radii(ion_b))
-        periodic_sum(buckingham_depth) do shift
-            r = distance(lattice, ion_b.frac_pos + SVector(shift), ion_a.frac_pos)
-            r ≈ 0 && return zero(T)  # only sum over non-zero r
-            buckingham_potential(r, buckingham_parameters(ion_a.type, ion_b.type)...)
+    buckingham_key = minmax(species(ion_a), species(ion_b))
+    if haskey(BUCKINGHAM_PARAMETERS, buckingham_key)
+        energy += if (ion_a == ion_b || minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) > buckingham_threshold * (radii(ion_a) + radii(ion_b)))
+            params = BUCKINGHAM_PARAMETERS[buckingham_key]
+            periodic_sum(buckingham_depth) do shift
+                r = distance(lattice, ion_b.frac_pos + SVector(shift), ion_a.frac_pos)
+                r ≈ 0 && return zero(T)  # only sum over non-zero r
+                buckingham_potential(r, params...)
+            end
+        else
+            buckingham_penalty
         end
-    else
-        buckingham_penalty
     end
     # radii penalty
     if !(ion_a == ion_b) && minimum_distance(ion_a.frac_pos, ion_b.frac_pos, lattice) / (radii(ion_a) + radii(ion_b)) > radii_threshold
@@ -66,19 +89,6 @@ end
 
 function buckingham_potential(r::T, A::T, ρ::T, C::T) where T<:Real
     return A * exp(-r/ρ) - C / r^6
-end
-
-function buckingham_parameters(ion_a::IonType{T}, ion_b::IonType{T}) where T<:Real
-    if Set([ion_a.species, ion_b.species]) == Set([:O])
-        return 1388.7, 0.36262, 175.0
-    elseif Set([ion_a.species, ion_b.species]) == Set([:Sr, :O])
-        return 1952.39, 0.33685, 19.22
-    elseif Set([ion_a.species, ion_b.species]) == Set([:Ti, :O])
-        return 4590.7279, 0.261, 0.0
-    else
-        # TODO: maybe throw an error here?
-        return 0.0, 1.0, 0.0
-    end
 end
 
 """

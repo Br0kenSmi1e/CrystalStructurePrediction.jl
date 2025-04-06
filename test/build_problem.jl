@@ -10,7 +10,7 @@ using CrystalStructurePrediction, Test
     # Lattice parameters
     lattice_constant = 3.899  # Å
     L = lattice_constant * [1 0 0; 0 1 0; 0 0 1]
-    lattice = Lattice(L, (true, true, true))
+    lattice = Lattice(L)
     
     # Ewald summation parameters
     depth = (4, 4, 4)

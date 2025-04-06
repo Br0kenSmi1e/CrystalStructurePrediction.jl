@@ -4,12 +4,12 @@ using CrystalStructurePrediction, StaticArrays
 using CrystalStructurePrediction: interaction_energy, ions_on_grid
 
 @testset "lattice" begin
-    lattice = Lattice(rand(3,3), (true, true, true))
+    lattice = Lattice(rand(3,3))
     @test lattice isa Lattice
 end
 
 @testset "interaction_energy" begin
-    lattice = Lattice([1.0 0.0 0.0; 0.0 0.8 0.0; 0.0 0.6 1.2], (true, true, true))
+    lattice = Lattice([1.0 0.0 0.0; 0.0 0.8 0.0; 0.0 0.6 1.2])
     ion_a = Ion(IonType(:O, -2, 1.35), [1, 1//2, 1//2])
     ion_b = Ion(IonType(:O, -2, 1.35), [0, 0, 1//5])
     alpha = 2.0 / (abs(det(lattice.vectors)))^(1/3)
